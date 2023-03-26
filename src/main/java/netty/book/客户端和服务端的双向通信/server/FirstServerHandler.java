@@ -1,4 +1,4 @@
-package 客户端和服务端的双向通信.server;
+package netty.book.客户端和服务端的双向通信.server;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
