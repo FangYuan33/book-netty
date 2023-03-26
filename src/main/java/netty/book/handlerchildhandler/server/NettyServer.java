@@ -1,4 +1,4 @@
-package netty.book.客户端和服务端的双向通信.server;
+package netty.book.handlerchildhandler.server;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
