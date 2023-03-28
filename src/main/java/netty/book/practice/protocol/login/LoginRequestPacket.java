@@ -1,7 +1,8 @@
-package netty.book.practice.protocol;
+package netty.book.practice.protocol.login;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import netty.book.practice.protocol.Packet;
 import netty.book.practice.protocol.command.Command;
 
 /**

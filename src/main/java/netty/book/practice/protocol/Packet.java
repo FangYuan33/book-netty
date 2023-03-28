@@ -20,14 +20,14 @@ public abstract class Packet {
     private Byte version = 1;
 
     /**
-     * 序列化器
+     * 序列化器 默认JSON解析
      */
     @JSONField(deserialize = false, serialize = false)
-    private Byte serializer;
+    private Byte serializer = 1;
 
     /**
      * 获取这个请求的命令
      */
-    @JSONField(serialize = false)
+    @JSONField(serialize = false, deserialize = false)
     public abstract Command getCommand();
 }

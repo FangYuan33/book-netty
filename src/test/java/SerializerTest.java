@@ -1,5 +1,5 @@
 import io.netty.buffer.ByteBuf;
-import netty.book.practice.protocol.LoginRequestPacket;
+import netty.book.practice.protocol.login.LoginRequestPacket;
 import netty.book.practice.protocol.Packet;
 import netty.book.practice.serialize.PacketCodeC;
 import netty.book.practice.serialize.impl.JSONSerializer;

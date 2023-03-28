@@ -2,9 +2,10 @@ package netty.book.practice.serialize;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import netty.book.practice.protocol.LoginRequestPacket;
+import netty.book.practice.protocol.login.LoginRequestPacket;
 import netty.book.practice.protocol.Packet;
 import netty.book.practice.protocol.command.Command;
+import netty.book.practice.protocol.login.LoginResponsePacket;
 import netty.book.practice.serialize.algorithm.SerializerAlgorithm;
 import netty.book.practice.serialize.impl.JSONSerializer;
 
@@ -40,6 +41,7 @@ public class PacketCodeC {
 
         packetTypeMap = new HashMap<>();
         packetTypeMap.put(Command.LOGIN_REQUEST.getValue(), LoginRequestPacket.class);
+        packetTypeMap.put(Command.LOGIN_RESPONSE.getValue(), LoginResponsePacket.class);
     }
 
     /**
