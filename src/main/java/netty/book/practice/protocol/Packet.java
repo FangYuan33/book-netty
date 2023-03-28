@@ -1,8 +1,8 @@
-package netty.book.protocol;
+package netty.book.practice.protocol;
 
 import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
-import netty.book.protocol.command.Command;
+import netty.book.practice.protocol.command.Command;
 
 /**
  * 通信数据包基类

@@ -1,7 +1,7 @@
-package netty.book.serialize;
+package netty.book.practice.serialize;
 
 
-import netty.book.serialize.algorithm.SerializerAlgorithm;
+import netty.book.practice.serialize.algorithm.SerializerAlgorithm;
 
 /**
  * 序列化

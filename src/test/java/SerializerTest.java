@@ -1,8 +1,8 @@
 import io.netty.buffer.ByteBuf;
-import netty.book.protocol.LoginRequestPacket;
-import netty.book.protocol.Packet;
-import netty.book.serialize.PacketCodeC;
-import netty.book.serialize.impl.JSONSerializer;
+import netty.book.practice.protocol.LoginRequestPacket;
+import netty.book.practice.protocol.Packet;
+import netty.book.practice.serialize.PacketCodeC;
+import netty.book.practice.serialize.impl.JSONSerializer;
 import org.junit.Assert;
 import org.junit.Test;
 

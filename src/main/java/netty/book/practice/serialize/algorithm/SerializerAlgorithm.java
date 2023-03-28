@@ -1,4 +1,4 @@
-package netty.book.serialize.algorithm;
+package netty.book.practice.serialize.algorithm;
 
 /**
  * 序列化算法

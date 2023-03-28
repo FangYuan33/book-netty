@@ -1,4 +1,4 @@
-package netty.book.protocol.command;
+package netty.book.practice.protocol.command;
 
 /**
  * 指令枚举

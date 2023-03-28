@@ -1,12 +1,12 @@
-package netty.book.serialize;
+package netty.book.practice.serialize;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import netty.book.protocol.LoginRequestPacket;
-import netty.book.protocol.Packet;
-import netty.book.protocol.command.Command;
-import netty.book.serialize.algorithm.SerializerAlgorithm;
-import netty.book.serialize.impl.JSONSerializer;
+import netty.book.practice.protocol.LoginRequestPacket;
+import netty.book.practice.protocol.Packet;
+import netty.book.practice.protocol.command.Command;
+import netty.book.practice.serialize.algorithm.SerializerAlgorithm;
+import netty.book.practice.serialize.impl.JSONSerializer;
 
 import java.util.HashMap;
 import java.util.Map;

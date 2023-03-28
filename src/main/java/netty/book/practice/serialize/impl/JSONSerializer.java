@@ -1,8 +1,8 @@
-package netty.book.serialize.impl;
+package netty.book.practice.serialize.impl;
 
 import com.alibaba.fastjson.JSON;
-import netty.book.serialize.Serializer;
-import netty.book.serialize.algorithm.SerializerAlgorithm;
+import netty.book.practice.serialize.Serializer;
+import netty.book.practice.serialize.algorithm.SerializerAlgorithm;
 
 public class JSONSerializer implements Serializer {
     @Override
