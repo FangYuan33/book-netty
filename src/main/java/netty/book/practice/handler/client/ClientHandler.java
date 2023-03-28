@@ -6,7 +6,9 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import netty.book.practice.protocol.Packet;
 import netty.book.practice.protocol.login.LoginRequestPacket;
 import netty.book.practice.protocol.login.LoginResponsePacket;
+import netty.book.practice.protocol.message.MessageResponsePacket;
 import netty.book.practice.serialize.PacketCodeC;
+import netty.book.practice.util.LoginUtil;
 
 import java.util.Date;
 
@@ -58,9 +60,14 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
 
             if (loginResponsePacket.isSuccess()) {
                 System.out.println(new Date() + ": 客户端登录成功");
+                // 标记登录成功
+                LoginUtil.markAsLogin(ctx.channel());
             } else {
                 System.out.println(new Date() + ": 客户端登录失败，原因：" + loginResponsePacket.getReason());
             }
+        } else if (packet instanceof MessageResponsePacket) {
+            MessageResponsePacket messageResponsePacket = (MessageResponsePacket) packet;
+            System.out.println(new Date() + ": 收到服务端的消息: " + messageResponsePacket.getMessage());
         }
     }
 }

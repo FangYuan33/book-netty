@@ -8,8 +8,16 @@ package netty.book.practice.protocol.command;
  */
 public enum Command {
 
+    /**
+     * 登录
+     */
     LOGIN_REQUEST(Byte.valueOf("1")),
-    LOGIN_RESPONSE(Byte.valueOf("2"));
+    LOGIN_RESPONSE(Byte.valueOf("2")),
+    /**
+     * 收发消息
+     */
+    MESSAGE_REQUEST(Byte.valueOf("3")),
+    MESSAGE_RESPONSE(Byte.valueOf("4"));
 
     private final Byte value;
 

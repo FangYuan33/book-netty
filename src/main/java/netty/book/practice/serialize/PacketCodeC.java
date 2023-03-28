@@ -6,6 +6,8 @@ import netty.book.practice.protocol.login.LoginRequestPacket;
 import netty.book.practice.protocol.Packet;
 import netty.book.practice.protocol.command.Command;
 import netty.book.practice.protocol.login.LoginResponsePacket;
+import netty.book.practice.protocol.message.MessageRequestPacket;
+import netty.book.practice.protocol.message.MessageResponsePacket;
 import netty.book.practice.serialize.algorithm.SerializerAlgorithm;
 import netty.book.practice.serialize.impl.JSONSerializer;
 
@@ -40,8 +42,12 @@ public class PacketCodeC {
         serializerMap.put(SerializerAlgorithm.JSON.getValue(), new JSONSerializer());
 
         packetTypeMap = new HashMap<>();
+        // 登录
         packetTypeMap.put(Command.LOGIN_REQUEST.getValue(), LoginRequestPacket.class);
         packetTypeMap.put(Command.LOGIN_RESPONSE.getValue(), LoginResponsePacket.class);
+        // 消息
+        packetTypeMap.put(Command.MESSAGE_REQUEST.getValue(), MessageRequestPacket.class);
+        packetTypeMap.put(Command.MESSAGE_RESPONSE.getValue(), MessageResponsePacket.class);
     }
 
     /**
