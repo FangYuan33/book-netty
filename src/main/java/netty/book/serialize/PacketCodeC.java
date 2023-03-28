@@ -17,7 +17,7 @@ import java.util.Map;
  * @author FangYuan
  * @since 2023-03-26 20:32:34
  */
-public class PacketSerializerUtil {
+public class PacketCodeC {
 
     /**
      * 魔数

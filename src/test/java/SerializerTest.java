@@ -1,7 +1,7 @@
 import io.netty.buffer.ByteBuf;
 import netty.book.protocol.LoginRequestPacket;
 import netty.book.protocol.Packet;
-import netty.book.serialize.PacketSerializerUtil;
+import netty.book.serialize.PacketCodeC;
 import netty.book.serialize.impl.JSONSerializer;
 import org.junit.Assert;
 import org.junit.Test;
@@ -18,9 +18,9 @@ public class SerializerTest {
         loginRequestPacket.setPassword("password");
 
         // 编码
-        ByteBuf byteBuf = PacketSerializerUtil.encode(loginRequestPacket);
+        ByteBuf byteBuf = PacketCodeC.encode(loginRequestPacket);
         // 解码
-        Packet packet = PacketSerializerUtil.decode(byteBuf);
+        Packet packet = PacketCodeC.decode(byteBuf);
 
         JSONSerializer jsonSerializer = new JSONSerializer();
         Assert.assertArrayEquals(jsonSerializer.serialize(loginRequestPacket), jsonSerializer.serialize(packet));
