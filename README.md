@@ -2,13 +2,55 @@
 
 Netty是一个异步基于**事件驱动**的**高性能网络通信**框架
 
-## 服务端启动流程
+### 服务端和客户端的启动流程
 
-参考 NettyServer.java 
+服务端启动需要创建 `ServerBootstrap` 对象，需要**初始化线程模型**，**配置IO模型**和**添加业务处理逻辑**
 
-## 客户端启动流程
+```java
+// 负责服务端的启动
+ServerBootstrap serverBootstrap = new ServerBootstrap();
 
-参考 NettyClient.java
+// 以下两个对象可以看做是两个线程组
+// 负责监听端口，接受新的链接
+NioEventLoopGroup boss = new NioEventLoopGroup();
+// 负责读取数据
+NioEventLoopGroup worker = new NioEventLoopGroup();
+
+// 配置线程组并指定NIO模型
+serverBootstrap.group(boss, worker).channel(NioServerSocketChannel.class)
+        // 定义后续每个 新链接 的读写业务逻辑
+        .childHandler(new ChannelInitializer<NioSocketChannel>() {
+            @Override
+            protected void initChannel(NioSocketChannel nioSocketChannel) throws Exception {
+                nioSocketChannel.pipeline().addLast(new StringDecoder())
+                        .addLast(new SimpleChannelInboundHandler<String>() {
+                            @Override
+                            protected void channelRead0(ChannelHandlerContext channelHandlerContext, String msg) throws Exception {
+                                System.out.println(msg);
+                            }
+                        });
+            }
+        });
+```
+
+客户端与服务端启动类似，创建的是 `Bootstrap` 对象，同样需要初始化以上三个对象信息
+
+```java
+// 负责客户端的启动
+Bootstrap bootstrap = new Bootstrap();
+// 客户端的线程模型
+NioEventLoopGroup group = new NioEventLoopGroup();
+
+// 指定线程组和NIO模型
+bootstrap.group(group).channel(NioSocketChannel.class)
+        // handler() 方法 业务处理逻辑
+        .handler(new ChannelInitializer<Channel>() {
+            @Override
+            protected void initChannel(Channel channel) throws Exception {
+                channel.pipeline().addLast(new StringEncoder());
+            }
+        });
+```
 
 ### ChannelInboundHandlerAdapter 和 ChannelOutboundHandlerAdapter
 
