@@ -5,8 +5,6 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import netty.book.inoutbound.in.InboundHandlerA;
-import netty.book.inoutbound.in.InboundHandlerB;
 
 /**
  * 客户端向服务端通信
