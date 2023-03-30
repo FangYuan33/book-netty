@@ -1,4 +1,4 @@
-package netty.book.practice.protocol.message;
+package netty.book.practice.protocol.response;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -6,19 +6,19 @@ import netty.book.practice.protocol.Packet;
 import netty.book.practice.protocol.command.Command;
 
 /**
- * 客户端发送消息的对象
+ * 服务端回复客户端的消息对象
  *
  * @author FangYuan
- * @since 2023-03-28 21:12:56
+ * @since 2023-03-28 21:14:10
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class MessageRequestPacket extends Packet {
+public class MessageResponsePacket extends Packet {
 
     private String message;
 
     @Override
     public Command getCommand() {
-        return Command.MESSAGE_REQUEST;
+        return Command.MESSAGE_RESPONSE;
     }
 }

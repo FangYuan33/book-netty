@@ -1,4 +1,4 @@
-package netty.book.practice.protocol.login;
+package netty.book.practice.protocol.response;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;

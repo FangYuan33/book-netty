@@ -2,12 +2,12 @@ package netty.book.practice.serialize;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import netty.book.practice.protocol.login.LoginRequestPacket;
+import netty.book.practice.protocol.request.LoginRequestPacket;
 import netty.book.practice.protocol.Packet;
 import netty.book.practice.protocol.command.Command;
-import netty.book.practice.protocol.login.LoginResponsePacket;
-import netty.book.practice.protocol.message.MessageRequestPacket;
-import netty.book.practice.protocol.message.MessageResponsePacket;
+import netty.book.practice.protocol.response.LoginResponsePacket;
+import netty.book.practice.protocol.request.MessageRequestPacket;
+import netty.book.practice.protocol.response.MessageResponsePacket;
 import netty.book.practice.serialize.algorithm.SerializerAlgorithm;
 import netty.book.practice.serialize.impl.JSONSerializer;
 
@@ -56,23 +56,36 @@ public class PacketCodeC {
     public static ByteBuf encode(Packet packet) {
         // 创建 ByteBuf 对象
         ByteBuf byteBuf = ByteBufAllocator.DEFAULT.ioBuffer();
-
-        // 开始编码 魔数
-        byteBuf.writeInt(MAGIC_NUMBER);
-        // 版本号
-        byteBuf.writeByte(packet.getVersion());
-        // 指令
-        byteBuf.writeByte(packet.getCommand().getValue());
-        // 序列化器
-        byteBuf.writeByte(packet.getSerializer());
-        // 对象信息
-        Serializer serializer = serializerMap.get(packet.getSerializer());
-        byte[] bytes = serializer.serialize(packet);
-        // 对象长度和信息
-        byteBuf.writeInt(bytes.length);
-        byteBuf.writeBytes(bytes);
+        writeByteBufInfo(byteBuf, packet);
 
         return byteBuf;
+    }
+
+    /**
+     * 编码
+     */
+    public static void encode(ByteBuf out, Packet msg) {
+        writeByteBufInfo(out, msg);
+    }
+
+    /**
+     * 编码ByteBuf信息
+     */
+    private static void writeByteBufInfo(ByteBuf out, Packet msg) {
+        // 开始编码 魔数
+        out.writeInt(MAGIC_NUMBER);
+        // 版本号
+        out.writeByte(msg.getVersion());
+        // 指令
+        out.writeByte(msg.getCommand().getValue());
+        // 序列化器
+        out.writeByte(msg.getSerializer());
+        // 对象信息
+        Serializer serializer = serializerMap.get(msg.getSerializer());
+        byte[] bytes = serializer.serialize(msg);
+        // 对象长度和信息
+        out.writeInt(bytes.length);
+        out.writeBytes(bytes);
     }
 
     /**
