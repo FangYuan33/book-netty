@@ -77,3 +77,24 @@ serverBootstrap.group(boss, worker).channel(NioServerSocketChannel.class)
 ![](images/inoutbound.jpg)
 
 InboundHandler的执行顺序与添加的责任链节点顺序一致，而OutboundHandler的执行顺序则相反。
+
+### SimpleChannelInboundHandler
+
+`SimpleChannelInboundHandler` 是 `ChannelInboundHandlerAdapter` 的实现类，`SimpleChannelInboundHandler` 能够指定泛型，
+这样在处理业务逻辑时，便无需再进行如下逻辑，它会在 `SimpleChannelInboundHandler` 的 `channelRead()` 方法中进行，它是一个模版方法，
+我们仅仅需要实现 `channelRead0()` 方法即可
+
+```java
+if (message instanceof XXMessage) {
+    // process
+} else {
+    ctx.fireChannelRead(message);   
+}
+```
+
+### ByteToMessageDecoder 和 MessageToByteEncoder
+
+`ByteToMessageDecoder` 用于将接受到的二进制数据解码成Java对象，ByteBuf默认情况下使用的是堆外内存，
+而 `ByteToMessageDecoder` 会**自动**帮我们做**内存释放**
+
+`MessageToByteEncoder` 用于将Java对象编码成二进制数据的ByteBuf，同样Netty会帮我们进行内存释放
