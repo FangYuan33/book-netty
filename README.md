@@ -98,3 +98,33 @@ if (message instanceof XXMessage) {
 而 `ByteToMessageDecoder` 会**自动**帮我们做**内存释放**
 
 `MessageToByteEncoder` 用于将Java对象编码成二进制数据的ByteBuf，同样Netty会帮我们进行内存释放
+
+### 粘包和半包
+
+即使我们发送消息的时候是以 `ByteBuf` 的形式发送的，但是到了底层操作系统，仍然是以字节流的形式对数据进行发送的，而且服务端也以字节流的形式读取，
+因此在服务端对字节流进行拼接时，可能就会造成发送时 `ByteBuf` 与读取时的 `ByteBuf` 不对等，这就会造成粘包和半包的现象
+
+为了解决以上的问题，就需要在数据不足的时候等待读取，直到数据足够时，构成一个完整的数据包并进行业务处理。
+一般用基于长度的拆包器 `LengthFieldBasedFrameDecoder` 来进行拆包工作，代码实例如下，其中的三个参数比较重要，第一个参数指定是数据包的最大长度，
+第二个参数代表偏移多个字节能找到数据长度信息，第三个参数指的是长度信息的字节数
+
+```java
+public class SplitHandler extends LengthFieldBasedFrameDecoder {
+
+    /**
+     * 拆包处理器的方法
+     */
+    public SplitHandler() {
+        // 最大长度 数据长度偏移量 表示该数据长度的字段字节数
+        super(Integer.MAX_VALUE, 7, 4);
+    }
+}
+```
+
+将该Handler添加到责任链的头结点即可，如下
+
+```java
+socketChannel.pipeline().addLast(new SplitHandler())
+        .addLast(new PacketDecoder()).addLast(new LoginHandler())
+        .addLast(new MessageHandler()).addLast(new PacketEncoder());
+```
