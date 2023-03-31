@@ -65,7 +65,7 @@ public class NettyClient {
 //                startConsoleThread(((ChannelFuture) future).channel());
 
                 // 测试粘包和半包
-                testPackage(((ChannelFuture) future).channel());
+//                testPackage(((ChannelFuture) future).channel());
             } else if (retry == 0) {
                 System.err.println("重试次数已用完，放弃连接！");
             } else {
