@@ -6,6 +6,7 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import netty.book.practice.handler.SplitHandler;
 import netty.book.practice.handler.server.LoginHandler;
 import netty.book.practice.handler.server.MessageHandler;
 import netty.book.practice.serialize.codec.PacketDecoder;
@@ -30,7 +31,8 @@ public class NettyServer {
                 .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel socketChannel) {
-                        socketChannel.pipeline().addLast(new PacketDecoder()).addLast(new LoginHandler())
+                        socketChannel.pipeline().addLast(new SplitHandler())
+                                .addLast(new PacketDecoder()).addLast(new LoginHandler())
                                 .addLast(new MessageHandler()).addLast(new PacketEncoder());
                     }
                 });

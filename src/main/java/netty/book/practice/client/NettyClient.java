@@ -1,7 +1,6 @@
 package netty.book.practice.client;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -9,10 +8,10 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import netty.book.practice.handler.SplitHandler;
 import netty.book.practice.handler.client.LoginHandler;
 import netty.book.practice.handler.client.MessageHandler;
 import netty.book.practice.protocol.request.MessageRequestPacket;
-import netty.book.practice.serialize.PacketCodeC;
 import netty.book.practice.serialize.codec.PacketDecoder;
 import netty.book.practice.serialize.codec.PacketEncoder;
 import netty.book.practice.util.LoginUtil;
@@ -46,7 +45,7 @@ public class NettyClient {
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel socketChannel) {
-                        socketChannel.pipeline().addLast(new PacketDecoder())
+                        socketChannel.pipeline().addLast(new SplitHandler()).addLast(new PacketDecoder())
                                 .addLast(new LoginHandler()).addLast(new MessageHandler()).addLast(new PacketEncoder());
                     }
                 });
@@ -63,7 +62,10 @@ public class NettyClient {
                 System.out.println(new Date() + ": 连接成功!");
 
                 // 链接成功后开启控制台读取消息
-                startConsoleThread(((ChannelFuture) future).channel());
+//                startConsoleThread(((ChannelFuture) future).channel());
+
+                // 测试粘包和半包
+                testPackage(((ChannelFuture) future).channel());
             } else if (retry == 0) {
                 System.err.println("重试次数已用完，放弃连接！");
             } else {
@@ -97,5 +99,17 @@ public class NettyClient {
                 }
             }
         }).start();
+    }
+
+    /**
+     * 测试粘包和半包
+     */
+    private static void testPackage(Channel channel) {
+        MessageRequestPacket messageRequestPacket = new MessageRequestPacket();
+
+        for (int i = 0; i < 100; i++) {
+            messageRequestPacket.setMessage("你好哇，李银河" + i);
+            channel.writeAndFlush(messageRequestPacket);
+        }
     }
 }
