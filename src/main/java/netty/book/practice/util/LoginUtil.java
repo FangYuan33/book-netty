@@ -23,6 +23,6 @@ public class LoginUtil {
      * 根据该变量是否有来判断是否登录成功
      */
     public static boolean hasLogin(Channel channel) {
-        return channel.attr(Attributes.LOGIN) != null;
+        return channel.attr(Attributes.LOGIN).get() != null;
     }
 }

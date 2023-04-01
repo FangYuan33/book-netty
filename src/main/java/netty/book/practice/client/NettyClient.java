@@ -45,8 +45,11 @@ public class NettyClient {
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel socketChannel) {
-                        socketChannel.pipeline().addLast(new SplitHandler()).addLast(new PacketDecoder())
-                                .addLast(new LoginHandler()).addLast(new MessageHandler()).addLast(new PacketEncoder());
+                        socketChannel.pipeline()
+                                .addLast(new SplitHandler())
+                                .addLast(new PacketDecoder())
+                                .addLast(new LoginHandler()).addLast(new MessageHandler())
+                                .addLast(new PacketEncoder());
                     }
                 });
 
@@ -62,7 +65,7 @@ public class NettyClient {
                 System.out.println(new Date() + ": 连接成功!");
 
                 // 链接成功后开启控制台读取消息
-//                startConsoleThread(((ChannelFuture) future).channel());
+                startConsoleThread(((ChannelFuture) future).channel());
 
                 // 测试粘包和半包
 //                testPackage(((ChannelFuture) future).channel());

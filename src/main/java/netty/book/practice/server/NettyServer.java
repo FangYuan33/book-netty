@@ -6,8 +6,8 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import netty.book.practice.handler.LifeCycleHandler;
 import netty.book.practice.handler.SplitHandler;
+import netty.book.practice.handler.server.AuthHandler;
 import netty.book.practice.handler.server.LoginHandler;
 import netty.book.practice.handler.server.MessageHandler;
 import netty.book.practice.serialize.codec.PacketDecoder;
@@ -32,9 +32,12 @@ public class NettyServer {
                 .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel socketChannel) {
-                        socketChannel.pipeline().addLast(new LifeCycleHandler())
+                        socketChannel.pipeline()
+//                                .addLast(new LifeCycleHandler())
+                                // 解决粘包和半包问题
                                 .addLast(new SplitHandler())
                                 .addLast(new PacketDecoder()).addLast(new LoginHandler())
+                                .addLast(new AuthHandler())
                                 .addLast(new MessageHandler()).addLast(new PacketEncoder());
                     }
                 });

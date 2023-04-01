@@ -4,6 +4,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import netty.book.practice.protocol.request.LoginRequestPacket;
 import netty.book.practice.protocol.response.LoginResponsePacket;
+import netty.book.practice.util.LoginUtil;
 
 import java.util.Date;
 
@@ -15,11 +16,15 @@ import java.util.Date;
  */
 public class LoginHandler extends SimpleChannelInboundHandler<LoginRequestPacket> {
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, LoginRequestPacket msg) throws Exception {
+    protected void channelRead0(ChannelHandlerContext ctx, LoginRequestPacket msg) {
         // 默认登录成功
         LoginResponsePacket loginResponsePacket = new LoginResponsePacket();
         loginResponsePacket.setSuccess(true);
         loginResponsePacket.setReason("登录成功");
         System.out.println(new Date() + ": 登录成功!");
+        LoginUtil.markAsLogin(ctx.channel());
+
+        // 回写登录响应
+        ctx.channel().writeAndFlush(loginResponsePacket);
     }
 }
