@@ -2,6 +2,7 @@ package netty.book.practice.protocol.request;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import netty.book.practice.protocol.Packet;
 import netty.book.practice.protocol.command.Command;
 
@@ -16,6 +17,14 @@ import netty.book.practice.protocol.command.Command;
 public class MessageRequestPacket extends Packet {
 
     private String message;
+
+    private String userId;
+
+    private String userName;
+
+    private String toUserId;
+
+    private String toUserName;
 
     @Override
     public Command getCommand() {

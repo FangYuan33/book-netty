@@ -15,6 +15,10 @@ import java.util.Date;
 public class MessageHandler extends SimpleChannelInboundHandler<MessageResponsePacket> {
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, MessageResponsePacket msg) {
-        System.out.println(new Date() + ": 收到服务端的消息: " + msg.getMessage());
+        if (msg.isSuccess()) {
+            System.out.println(msg.getFromUserId() + ":" + msg.getFromUserName() + " -> " + msg.getMessage());
+        } else {
+            System.out.println(new Date() + ": 收到服务端的消息: " + msg.getMessage());
+        }
     }
 }

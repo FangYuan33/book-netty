@@ -11,13 +11,16 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import netty.book.practice.handler.SplitHandler;
 import netty.book.practice.handler.client.LoginHandler;
 import netty.book.practice.handler.client.MessageHandler;
+import netty.book.practice.protocol.request.LoginRequestPacket;
 import netty.book.practice.protocol.request.MessageRequestPacket;
 import netty.book.practice.serialize.codec.PacketDecoder;
 import netty.book.practice.serialize.codec.PacketEncoder;
-import netty.book.practice.util.LoginUtil;
+import netty.book.practice.session.Session;
+import netty.book.practice.util.SessionUtil;
 
 import java.util.Date;
 import java.util.Scanner;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -62,7 +65,7 @@ public class NettyClient {
     private static void connect(Bootstrap bootstrap, String host, int port, int retry) {
         bootstrap.connect(host, port).addListener(future -> {
             if (future.isSuccess()) {
-                System.out.println(new Date() + ": 连接成功!");
+                System.out.println(new Date() + ": 连接成功，准备登录");
 
                 // 链接成功后开启控制台读取消息
                 startConsoleThread(((ChannelFuture) future).channel());
@@ -89,19 +92,61 @@ public class NettyClient {
      */
     private static void startConsoleThread(Channel channel) {
         new Thread(() -> {
+            Scanner scanner = new Scanner(System.in);
             while (!Thread.interrupted()) {
-                if (LoginUtil.hasLogin(channel)) {
-                    System.out.println("输入消息发送至服务端: ");
+                if (!SessionUtil.hasLogin(channel)) {
+                    System.out.println("输入用户名登录: ");
+                    String userName = scanner.nextLine();
 
-                    Scanner scanner = new Scanner(System.in);
-                    String line = scanner.nextLine();
+                    // 初始化登录请求对象
+                    LoginRequestPacket loginRequestPacket = initialLoginRequest(userName);
 
-                    MessageRequestPacket messageRequestPacket = new MessageRequestPacket();
-                    messageRequestPacket.setMessage(line);
+                    channel.writeAndFlush(loginRequestPacket);
+
+                    // 等待连接请求回复
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    // 初始化要发送的消息
+                    MessageRequestPacket messageRequestPacket =
+                            initialMessageRequest(scanner, SessionUtil.getSession(channel));
+
                     channel.writeAndFlush(messageRequestPacket);
                 }
             }
         }).start();
+    }
+
+    /**
+     * 初始化登录请求
+     */
+    private static LoginRequestPacket initialLoginRequest(String userName) {
+        LoginRequestPacket loginRequestPacket = new LoginRequestPacket();
+        loginRequestPacket.setUserName(userName);
+        loginRequestPacket.setPassword(UUID.randomUUID().toString());
+
+        return loginRequestPacket;
+    }
+
+    /**
+     * 初始化要发送的消息
+     */
+    private static MessageRequestPacket initialMessageRequest(Scanner scanner, Session session) {
+        System.out.println("输入要发送的用户名: ");
+        String toUserName = scanner.next();
+        System.out.println("输入消息内容: ");
+        String message = scanner.next();
+        MessageRequestPacket messageRequestPacket = new MessageRequestPacket();
+
+        messageRequestPacket.setUserName(session.getUserName());
+        messageRequestPacket.setUserId(session.getUserId());
+        messageRequestPacket.setToUserName(toUserName);
+        messageRequestPacket.setMessage(message);
+
+        return messageRequestPacket;
     }
 
     /**
