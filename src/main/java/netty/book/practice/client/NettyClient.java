@@ -8,19 +8,16 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import netty.book.practice.command.ConsoleCommandManger;
 import netty.book.practice.handler.SplitHandler;
 import netty.book.practice.handler.client.LoginHandler;
 import netty.book.practice.handler.client.MessageHandler;
-import netty.book.practice.protocol.request.LoginRequestPacket;
 import netty.book.practice.protocol.request.MessageRequestPacket;
 import netty.book.practice.serialize.codec.PacketDecoder;
 import netty.book.practice.serialize.codec.PacketEncoder;
-import netty.book.practice.session.Session;
-import netty.book.practice.util.SessionUtil;
 
 import java.util.Date;
 import java.util.Scanner;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -93,60 +90,13 @@ public class NettyClient {
     private static void startConsoleThread(Channel channel) {
         new Thread(() -> {
             Scanner scanner = new Scanner(System.in);
+
             while (!Thread.interrupted()) {
-                if (!SessionUtil.hasLogin(channel)) {
-                    System.out.println("输入用户名登录: ");
-                    String userName = scanner.nextLine();
-
-                    // 初始化登录请求对象
-                    LoginRequestPacket loginRequestPacket = initialLoginRequest(userName);
-
-                    channel.writeAndFlush(loginRequestPacket);
-
-                    // 等待连接请求回复
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                } else {
-                    // 初始化要发送的消息
-                    MessageRequestPacket messageRequestPacket =
-                            initialMessageRequest(scanner, SessionUtil.getSession(channel));
-
-                    channel.writeAndFlush(messageRequestPacket);
-                }
+                // 执行命令
+                ConsoleCommandManger consoleCommandManger = new ConsoleCommandManger();
+                consoleCommandManger.execCommand(scanner, channel);
             }
         }).start();
-    }
-
-    /**
-     * 初始化登录请求
-     */
-    private static LoginRequestPacket initialLoginRequest(String userName) {
-        LoginRequestPacket loginRequestPacket = new LoginRequestPacket();
-        loginRequestPacket.setUserName(userName);
-        loginRequestPacket.setPassword(UUID.randomUUID().toString());
-
-        return loginRequestPacket;
-    }
-
-    /**
-     * 初始化要发送的消息
-     */
-    private static MessageRequestPacket initialMessageRequest(Scanner scanner, Session session) {
-        System.out.println("输入要发送的用户名: ");
-        String toUserName = scanner.next();
-        System.out.println("输入消息内容: ");
-        String message = scanner.next();
-        MessageRequestPacket messageRequestPacket = new MessageRequestPacket();
-
-        messageRequestPacket.setUserName(session.getUserName());
-        messageRequestPacket.setUserId(session.getUserId());
-        messageRequestPacket.setToUserName(toUserName);
-        messageRequestPacket.setMessage(message);
-
-        return messageRequestPacket;
     }
 
     /**
