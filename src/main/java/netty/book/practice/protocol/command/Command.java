@@ -17,7 +17,12 @@ public enum Command {
      * 收发消息
      */
     MESSAGE_REQUEST(Byte.valueOf("3")),
-    MESSAGE_RESPONSE(Byte.valueOf("4"));
+    MESSAGE_RESPONSE(Byte.valueOf("4")),
+    /**
+     * 创建群组的请求和响应
+     */
+    CREATE_GROUP_REQUEST(Byte.valueOf("5")),
+    CREATE_GROUP_RESPONSE(Byte.valueOf("6"));
 
     private final Byte value;
 

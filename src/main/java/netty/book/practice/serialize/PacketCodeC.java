@@ -2,9 +2,11 @@ package netty.book.practice.serialize;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import netty.book.practice.protocol.request.CreateGroupRequestPacket;
 import netty.book.practice.protocol.request.LoginRequestPacket;
 import netty.book.practice.protocol.Packet;
 import netty.book.practice.protocol.command.Command;
+import netty.book.practice.protocol.response.CreateGroupResponsePacket;
 import netty.book.practice.protocol.response.LoginResponsePacket;
 import netty.book.practice.protocol.request.MessageRequestPacket;
 import netty.book.practice.protocol.response.MessageResponsePacket;
@@ -48,6 +50,9 @@ public class PacketCodeC {
         // 消息
         packetTypeMap.put(Command.MESSAGE_REQUEST.getValue(), MessageRequestPacket.class);
         packetTypeMap.put(Command.MESSAGE_RESPONSE.getValue(), MessageResponsePacket.class);
+        // 创建群组
+        packetTypeMap.put(Command.CREATE_GROUP_RESPONSE.getValue(), CreateGroupRequestPacket.class);
+        packetTypeMap.put(Command.CREATE_GROUP_RESPONSE.getValue(), CreateGroupResponsePacket.class);
     }
 
     /**
