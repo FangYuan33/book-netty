@@ -2,6 +2,7 @@ package netty.book.practice.util;
 
 
 import io.netty.channel.Channel;
+import io.netty.channel.group.ChannelGroup;
 import netty.book.practice.constant.Attributes;
 import netty.book.practice.session.Session;
 
@@ -20,6 +21,11 @@ public class SessionUtil {
      * 用来保存 userName 和 channel 的映射
      */
     private static final Map<String, Channel> userNameChannelMap = new ConcurrentHashMap<>();
+
+    /**
+     * 用来保存 群 ID 和 channelGroup 的映射
+     */
+    private static final Map<String, ChannelGroup> groupIdChannelGroupMap = new ConcurrentHashMap<>();
 
     /**
      * 绑定Session代表登陆成功
@@ -42,6 +48,20 @@ public class SessionUtil {
     }
 
     /**
+     * 绑定群ID和groupChannel
+     */
+    public static void bindChannelGroup(String groupId, ChannelGroup channelGroup) {
+        groupIdChannelGroupMap.put(groupId, channelGroup);
+    }
+
+    /**
+     * 获取groupChannel
+     */
+    public static ChannelGroup getChannelGroup(String groupId) {
+        return groupIdChannelGroupMap.get(groupId);
+    }
+
+    /**
      * 根据该变量是否有来判断是否登录成功
      */
     public static boolean hasLogin(Channel channel) {
@@ -60,5 +80,18 @@ public class SessionUtil {
      */
     public static Channel getChannel(String userName) {
         return userNameChannelMap.get(userName);
+    }
+
+    /**
+     * 获取用户名
+     */
+    public static String getUserName(Channel channel) {
+        for (Map.Entry<String, Channel> entry : userNameChannelMap.entrySet()) {
+            if (entry.getValue().equals(channel)) {
+                return entry.getKey();
+            }
+        }
+
+        return null;
     }
 }

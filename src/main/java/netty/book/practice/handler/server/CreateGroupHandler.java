@@ -36,6 +36,9 @@ public class CreateGroupHandler extends SimpleChannelInboundHandler<CreateGroupR
         responsePacket.setGroupId(UUID.randomUUID().toString().split("-")[0]);
         responsePacket.setUserNameList(userNameList);
 
+        // 保存群组Id 和 channelGroup 的关系
+        SessionUtil.bindChannelGroup(responsePacket.getGroupId(), channelGroup);
+
         // 群发消息
         channelGroup.writeAndFlush(responsePacket);
 

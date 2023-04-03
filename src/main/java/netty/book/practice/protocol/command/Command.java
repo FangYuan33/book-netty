@@ -22,7 +22,16 @@ public enum Command {
      * 创建群组的请求和响应
      */
     CREATE_GROUP_REQUEST(Byte.valueOf("5")),
-    CREATE_GROUP_RESPONSE(Byte.valueOf("6"));
+    CREATE_GROUP_RESPONSE(Byte.valueOf("6")),
+    /**
+     * 加入、退出和群组列表
+     */
+    JOIN_GROUP_REQUEST(Byte.valueOf("7")),
+    JOIN_GROUP_RESPONSE(Byte.valueOf("8")),
+    QUIT_GROUP_REQUEST(Byte.valueOf("9")),
+    QUIT_GROUP_RESPONSE(Byte.valueOf("10")),
+    LIST_MEMBERS_REQUEST(Byte.valueOf("11")),
+    LIST_MEMBERS_RESPONSE(Byte.valueOf("12"));
 
     private final Byte value;
 

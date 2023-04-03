@@ -7,10 +7,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import netty.book.practice.handler.SplitHandler;
-import netty.book.practice.handler.server.AuthHandler;
-import netty.book.practice.handler.server.CreateGroupHandler;
-import netty.book.practice.handler.server.LoginHandler;
-import netty.book.practice.handler.server.MessageHandler;
+import netty.book.practice.handler.server.*;
 import netty.book.practice.serialize.codec.PacketDecoder;
 import netty.book.practice.serialize.codec.PacketEncoder;
 
@@ -39,7 +36,7 @@ public class NettyServer {
                                 .addLast(new SplitHandler())
                                 .addLast(new PacketDecoder())
                                 .addLast(new LoginHandler(), new AuthHandler(), new MessageHandler())
-                                .addLast(new CreateGroupHandler())
+                                .addLast(new CreateGroupHandler(), new JoinGroupHandler())
                                 .addLast(new PacketEncoder());
                     }
                 });

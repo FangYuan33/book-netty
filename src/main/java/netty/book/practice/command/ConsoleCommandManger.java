@@ -2,6 +2,7 @@ package netty.book.practice.command;
 
 import io.netty.channel.Channel;
 import netty.book.practice.command.impl.CreateGroupConsoleCommand;
+import netty.book.practice.command.impl.JoinGroupConsoleCommand;
 import netty.book.practice.command.impl.LoginConsoleCommand;
 import netty.book.practice.command.impl.SendToUserConsoleCommand;
 import netty.book.practice.util.SessionUtil;
@@ -25,6 +26,7 @@ public class ConsoleCommandManger {
         consoleCommandMap.put("sendToUser", new SendToUserConsoleCommand());
         consoleCommandMap.put("login", new LoginConsoleCommand());
         consoleCommandMap.put("createGroup", new CreateGroupConsoleCommand());
+        consoleCommandMap.put("joinGroup", new JoinGroupConsoleCommand());
     }
 
     /**
