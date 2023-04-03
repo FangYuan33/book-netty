@@ -10,6 +10,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import netty.book.practice.command.ConsoleCommandManger;
 import netty.book.practice.handler.SplitHandler;
+import netty.book.practice.handler.client.CreateGroupHandler;
 import netty.book.practice.handler.client.LoginHandler;
 import netty.book.practice.handler.client.MessageHandler;
 import netty.book.practice.protocol.request.MessageRequestPacket;
@@ -48,7 +49,7 @@ public class NettyClient {
                         socketChannel.pipeline()
                                 .addLast(new SplitHandler())
                                 .addLast(new PacketDecoder())
-                                .addLast(new LoginHandler()).addLast(new MessageHandler())
+                                .addLast(new LoginHandler(), new MessageHandler(), new CreateGroupHandler())
                                 .addLast(new PacketEncoder());
                     }
                 });

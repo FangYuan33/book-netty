@@ -2,7 +2,6 @@ package netty.book.practice.handler.client;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import netty.book.practice.protocol.request.LoginRequestPacket;
 import netty.book.practice.protocol.response.LoginResponsePacket;
 import netty.book.practice.session.Session;
 import netty.book.practice.util.SessionUtil;

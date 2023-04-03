@@ -51,7 +51,7 @@ public class PacketCodeC {
         packetTypeMap.put(Command.MESSAGE_REQUEST.getValue(), MessageRequestPacket.class);
         packetTypeMap.put(Command.MESSAGE_RESPONSE.getValue(), MessageResponsePacket.class);
         // 创建群组
-        packetTypeMap.put(Command.CREATE_GROUP_RESPONSE.getValue(), CreateGroupRequestPacket.class);
+        packetTypeMap.put(Command.CREATE_GROUP_REQUEST.getValue(), CreateGroupRequestPacket.class);
         packetTypeMap.put(Command.CREATE_GROUP_RESPONSE.getValue(), CreateGroupResponsePacket.class);
     }
 

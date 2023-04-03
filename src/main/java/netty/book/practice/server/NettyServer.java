@@ -8,6 +8,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import netty.book.practice.handler.SplitHandler;
 import netty.book.practice.handler.server.AuthHandler;
+import netty.book.practice.handler.server.CreateGroupHandler;
 import netty.book.practice.handler.server.LoginHandler;
 import netty.book.practice.handler.server.MessageHandler;
 import netty.book.practice.serialize.codec.PacketDecoder;
@@ -36,9 +37,10 @@ public class NettyServer {
 //                                .addLast(new LifeCycleHandler())
                                 // 解决粘包和半包问题
                                 .addLast(new SplitHandler())
-                                .addLast(new PacketDecoder()).addLast(new LoginHandler())
-                                .addLast(new AuthHandler())
-                                .addLast(new MessageHandler()).addLast(new PacketEncoder());
+                                .addLast(new PacketDecoder())
+                                .addLast(new LoginHandler(), new AuthHandler(), new MessageHandler())
+                                .addLast(new CreateGroupHandler())
+                                .addLast(new PacketEncoder());
                     }
                 });
 
