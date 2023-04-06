@@ -55,6 +55,9 @@ public class PacketCodeC {
         // 退出群组
         packetTypeMap.put(Command.QUIT_GROUP_REQUEST.getValue(), QuitGroupRequestPacket.class);
         packetTypeMap.put(Command.QUIT_GROUP_RESPONSE.getValue(), QuitGroupResponsePacket.class);
+        // 列举群组成员
+        packetTypeMap.put(Command.LIST_MEMBERS_REQUEST.getValue(), ListGroupMembersRequestPacket.class);
+        packetTypeMap.put(Command.LIST_MEMBERS_RESPONSE.getValue(), ListGroupMembersResponsePacket.class);
     }
 
     /**

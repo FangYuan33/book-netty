@@ -48,7 +48,7 @@ public class NettyClient {
                                 .addLast(new SplitHandler())
                                 .addLast(new PacketDecoder())
                                 .addLast(new LoginHandler(), new MessageHandler(), new CreateGroupHandler())
-                                .addLast(new JoinGroupHandler(), new QuitGroupHandler())
+                                .addLast(new JoinGroupHandler(), new QuitGroupHandler(), new ListGroupMembersHandler())
                                 .addLast(new PacketEncoder());
                     }
                 });
