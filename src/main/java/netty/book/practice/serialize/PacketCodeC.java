@@ -58,6 +58,9 @@ public class PacketCodeC {
         // 列举群组成员
         packetTypeMap.put(Command.LIST_MEMBERS_REQUEST.getValue(), ListGroupMembersRequestPacket.class);
         packetTypeMap.put(Command.LIST_MEMBERS_RESPONSE.getValue(), ListGroupMembersResponsePacket.class);
+        // 收发群组消息
+        packetTypeMap.put(Command.SEND_GROUP_MESSAGE_REQUEST.getValue(), GroupMessageRequestPacket.class);
+        packetTypeMap.put(Command.SEND_GROUP_MESSAGE_RESPONSE.getValue(), GroupMessageResponsePacket.class);
     }
 
     /**

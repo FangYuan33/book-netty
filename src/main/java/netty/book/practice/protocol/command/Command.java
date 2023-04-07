@@ -31,7 +31,12 @@ public enum Command {
     QUIT_GROUP_REQUEST(Byte.valueOf("9")),
     QUIT_GROUP_RESPONSE(Byte.valueOf("10")),
     LIST_MEMBERS_REQUEST(Byte.valueOf("11")),
-    LIST_MEMBERS_RESPONSE(Byte.valueOf("12"));
+    LIST_MEMBERS_RESPONSE(Byte.valueOf("12")),
+    /**
+     * 发送群聊消息
+     */
+    SEND_GROUP_MESSAGE_REQUEST(Byte.valueOf("13")),
+    SEND_GROUP_MESSAGE_RESPONSE(Byte.valueOf("14"));
 
     private final Byte value;
 
