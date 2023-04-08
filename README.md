@@ -145,7 +145,7 @@ ByteBuf默认情况下使用的是**堆外内存**，不进行内存释放会发
 `Handler` 会自动帮我们完成内存释放的操作，无需再次手动释放。因为我们实现的 `encode()` 和 `decode()` 方法只是这两个 `Handler` 源码中的一个环节，
 最终会在 finally 代码块中完成对内存的释放，具体内容可阅读 `MessageToByteEncoder` 中第99行 `write()` 方法源码
 
-#### 2.4 在服务端中添加Handler
+#### 2.4 在服务端中添加编码解码Handler
 
 ```java
 serverBootstrap.group(boss, worker).channel(NioServerSocketChannel.class)
@@ -161,50 +161,81 @@ serverBootstrap.group(boss, worker).channel(NioServerSocketChannel.class)
         });
 ```
 
-### ChannelInboundHandlerAdapter 和 ChannelOutboundHandlerAdapter
+### 3. 添加业务处理Handler
 
-在Netty框架里，每个连接对应着一个 `Channel`，而这个 `Channel` 的所有处理逻辑都在一个叫作 `ChannelPipeline` 的对象里。
-`ChannelPipeline` 是一个双向链表，使用的是责任链模式，每个链表节点中封装着 `Handler`，并且可以获取Channel相关的上下文信息（ChannelHandlerContext）
+在Netty框架中，客户端与服务端的每个连接都对应着一个 `Channel`，而这个 `Channel` 的所有处理逻辑都封装在一个叫作 `ChannelPipeline` 的对象里。
+`ChannelPipeline` 是一个双向链表，它使用的是**责任链模式**，每个链表节点都是一个 `Handler`，能通它能获取 `Channel` 相关的上下文信息(ChannelHandlerContext)。
+Netty为我们提供了多种读取 `Channel` 中数据的 `Handler`，其中比较常用的是 `ChannelInboundHandlerAdapter` 和 `SimpleChannelInboundHandler`，
+下文中我们以读取心跳消息为例
 
-有两种不同的Handler实现，分别用来处理读数据(ChannelInboundHandlerAdapter)和写数据(ChannelOutboundHandlerAdapter)，
-如果Handler按如下顺序配置，它的执行逻辑顺序如下图所示
+#### 3.1 ChannelInboundHandlerAdapter
+
+如下为处理心跳业务逻辑的 `Handler`，具体执行逻辑参考代码和注释即可
+
+```java
+public class HeartBeatHandler extends ChannelInboundHandlerAdapter {
+
+    /**
+     * channel中有数据可读时，会回调该方法
+     *
+     * @param msg 如果在该Handler前没有解码Handler节点处理，该对象类型为ByteBuf；否则为解码后的Java对象
+     */
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        Message message = (Message) msg;
+        // 处理心跳消息
+        processHeartBeatMessage(message);
+
+        // 初始化Ack消息
+        Message ackMessage = initialAckMessage();
+        // 回写给客户端
+        ctx.channel().writeAndFlush(ackMessage);
+    }
+}
+```
+
+#### 3.2 SimpleChannelInboundHandler
+
+`SimpleChannelInboundHandler` 是 `ChannelInboundHandlerAdapter` 的实现类，`SimpleChannelInboundHandler` 能够指定泛型，
+这样在处理业务逻辑时，便**无需再添加上文代码中对象强转的逻辑**，这部分代码实现是在 `SimpleChannelInboundHandler` 的 `channelRead()` 方法中完成的，
+它是一个模版方法，我们仅仅需要实现 `channelRead0()` 方法即可，代码示例如下
+
+```java
+public class HeartBeatHandler extends SimpleChannelInboundHandler<Message> {
+
+    /**
+     * @param msg 注意这里的对象类型即为 Message
+     */
+    @Override
+    protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws Exception {
+        // 处理心跳消息
+        processHeartBeatMessage(message);
+
+        // 初始化Ack消息
+        Message ackMessage = initialAckMessage();
+        // 回写给客户端
+        ctx.channel().writeAndFlush(ackMessage);
+    }
+}
+```
+
+#### 3.3 在服务端中添加心跳处理Handler
 
 ```java
 serverBootstrap.group(boss, worker).channel(NioServerSocketChannel.class)
         .childHandler(new ChannelInitializer<NioSocketChannel>() {
             @Override
-            protected void initChannel(NioSocketChannel ch) throws Exception {
-                // 处理读数据的逻辑
-                ch.pipeline().addLast(new InboundHandlerA()).addLast(new InboundHandlerB());
-
-                // 处理写数据的逻辑
-                ch.pipeline().addLast(new OutboundHandlerA()).addLast(new OutboundHandlerB());
+            protected void initChannel(NioSocketChannel nioSocketChannel) throws Exception {
+                nioSocketChannel.pipeline()
+                        // 接收到进行解码
+                        .addLast(new TcpDecoder(serializer))
+                        // 心跳业务处理Handler
+                        .addLast(new HeartBeatHandler())
+                        // 发送请求时进行编码
+                        .addLast(new TcpEncoder(serializer));
             }
         });
 ```
-
-![](images/inoutbound.jpg)
-
-InboundHandler的执行顺序与添加的责任链节点顺序一致，而OutboundHandler的执行顺序则相反。
-
-### SimpleChannelInboundHandler
-
-`SimpleChannelInboundHandler` 是 `ChannelInboundHandlerAdapter` 的实现类，`SimpleChannelInboundHandler` 能够指定泛型，
-这样在处理业务逻辑时，便无需再进行如下逻辑，它会在 `SimpleChannelInboundHandler` 的 `channelRead()` 方法中进行，它是一个模版方法，
-我们仅仅需要实现 `channelRead0()` 方法即可
-
-```java
-if (message instanceof XXMessage) {
-    // process
-} else {
-    ctx.fireChannelRead(message);   
-}
-```
-
-### ByteToMessageDecoder 和 MessageToByteEncoder
-
-`ByteToMessageDecoder` 用于将接受到的二进制数据解码成Java对象，ByteBuf默认情况下使用的是堆外内存，
-而 `ByteToMessageDecoder` 会**自动**帮我们做**内存释放**
 
 `MessageToByteEncoder` 用于将Java对象编码成二进制数据的ByteBuf，同样Netty会帮我们进行内存释放
 
