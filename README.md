@@ -224,3 +224,18 @@ so can't be added or removed multiple times`
 `SplitHanlder` 不能进行单例处理，因为它的内部实现与每个 `Channel` 都有关，每个 `SplitHandler` 都需要维持每个 `Channel` 读到的数据，
 即它是有状态的。
 
+#### 减少NIO线程阻塞
+
+对于耗时的业务操作，需要将它们都丢到**业务线程池中去处理**，因为单个NIO线程会管理很多 `Channel` ，
+只要有一个 `Channel` 中的 `Handler` 的 `channelRead()` 方法被业务逻辑阻塞，那么它就会拖慢绑定在该NIO线程上的其他所有 `Channel`。
+
+```java
+protected void channelRead(ChannelHandlerContext ctx, Object message) {
+    threadPool.submit(new Runnable() {
+        // 耗时的业务处理逻辑
+        doSomethingSependTooMuchTime();
+        
+        writeAndFlush();
+    });
+}
+```
