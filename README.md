@@ -68,6 +68,99 @@ bootstrap.group(group).channel(NioSocketChannel.class)
         });
 ```
 
+（下文中内容均以服务端处理逻辑为准）
+
+### 2. 编码和解码
+
+客户端与服务端进行通信，通信的消息是以**二进制字节流**的形式通过 `Channel` 进行传递的，所以当我们在客户端封装好**Java业务对象**后，
+需要将其按照协议转换成**字节数组**，并且当服务端接受到该**二进制字节流**时，需要将其再次转换成**Java业务对象**进行逻辑处理，
+这就是**编码和解码**的过程。Netty 为我们提供了 `MessageToByteEncoder` 用于编码，`ByteToMessageDecoder` 用于解码。
+
+#### 2.1 MessageToByteEncoder
+
+用于将Java对象编码成字节数组并写入 `ByteBuf`，代码示例如下
+
+```java
+public class TcpEncoder extends MessageToByteEncoder<Message> {
+
+    /**
+     * 序列化器
+     */
+    private final Serializer serializer;
+
+    public TcpEncoder(Serializer serializer) {
+        this.serializer = serializer;
+    }
+
+    /**
+     * 编码的执行逻辑
+     *
+     * @param message 需要被编码的消息对象
+     * @param byteBuf 将字节数组写入ByteBuf
+     */
+    @Override
+    protected void encode(ChannelHandlerContext channelHandlerContext, Message message, ByteBuf byteBuf) throws Exception {
+        // 通过自定义的序列化器将对象转换成字节数组
+        byte[] bytes = serializer.serialize(message);
+        // 将字节数组写入 ByteBuf 便完成了对象的编码流程
+        byteBuf.writeBytes(bytes);
+    }
+}
+```
+
+#### 2.2 ByteToMessageDecoder
+
+它用于将接收到的二进制数据流解码成Java对象，与上述代码类似，只不过是将该过程反过来了而已，代码示例如下
+
+```java
+public class TcpDecoder extends ByteToMessageDecoder {
+    /**
+     * 序列化器
+     */
+    private final Serializer serializer;
+
+    public TcpDecoder(Serializer serializer) {
+        this.serializer = serializer;
+    }
+
+    /**
+     * 解码的执行逻辑
+     *
+     * @param byteBuf 接收到的ByteBuf对象
+     * @param list    任何完成解码的Java对象添加到该List中即可
+     */
+    @Override
+    protected void decode(ChannelHandlerContext ctx, ByteBuf byteBuf, List<Object> list) throws Exception {
+        // 根据协议自定义的解码逻辑将其解码成Java对象
+        Message message = serializer.deSerialize(byteBuf);
+        // 解码完成后添加到List中即可
+        list.add(message);
+    }
+}
+```
+
+#### 2.3 注意要点
+
+ByteBuf默认情况下使用的是**堆外内存**，不进行内存释放会发生内存溢出。不过 `ByteToMessageDecoder` 和 `MessageToByteEncoder` 这两个解码和编码
+`Handler` 会自动帮我们完成内存释放的操作，无需再次手动释放。因为我们实现的 `encode()` 和 `decode()` 方法只是这两个 `Handler` 源码中的一个环节，
+最终会在 finally 代码块中完成对内存的释放，具体内容可阅读 `MessageToByteEncoder` 中第99行 `write()` 方法源码
+
+#### 2.4 在服务端中添加Handler
+
+```java
+serverBootstrap.group(boss, worker).channel(NioServerSocketChannel.class)
+        .childHandler(new ChannelInitializer<NioSocketChannel>() {
+            @Override
+            protected void initChannel(NioSocketChannel nioSocketChannel) throws Exception {
+                nioSocketChannel.pipeline()
+                        // 接收到进行解码
+                        .addLast(new TcpDecoder(serializer))
+                        // 发送请求时进行编码
+                        .addLast(new TcpEncoder(serializer));
+            }
+        });
+```
+
 ### ChannelInboundHandlerAdapter 和 ChannelOutboundHandlerAdapter
 
 在Netty框架里，每个连接对应着一个 `Channel`，而这个 `Channel` 的所有处理逻辑都在一个叫作 `ChannelPipeline` 的对象里。
