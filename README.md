@@ -328,7 +328,7 @@ public class LifeCycleHandler extends ChannelInboundHandlerAdapter {
 
 以如下情况为例，当客户端频繁的向服务端发送心跳消息时，读取到的ByteBuf信息如下，其中一个心跳请求是用红框圈出的部分
 
-![img.png](img.png)
+![img.png](images/粘包日志.png)
 
 可以发现多个心跳请求"粘"在了一起，那么我们需要对它进行拆包处理，否则只会读取第一条心跳请求，之后的请求会全部失效
 
@@ -339,7 +339,7 @@ Netty 为我们提供了基于长度的拆包器 `LengthFieldBasedFrameDecoder` 
 
 以标准接口文档中的协议（图示）为准，代码示例如下，其中的四个参数比较重要，详细信息可见注释描述
 
-![](标准协议.png)
+![](images/标准协议.png)
 
 ```java
 public class SplitHandler extends LengthFieldBasedFrameDecoder {
