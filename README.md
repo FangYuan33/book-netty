@@ -3,29 +3,29 @@
 Netty是一个异步基于**事件驱动**的**高性能网络通信**框架，可以看做是对NIO和BIO的封装，并提供了简单易用的API、Handler和工具类等，
 用以快速开发高性能、高可靠性的网络服务端和客户端程序。
 
-### 服务端和客户端的启动流程
+### 1. 创建服务端
 
-服务端启动需要创建 `ServerBootstrap` 对象，需要**初始化线程模型**，**配置IO模型**和**添加业务处理逻辑**，在添加业务逻辑时，
-其实是调用了 `childHandler()` 方法添加了一个 `ChannelInitializer` Handler，
-并在其中调用 `nioSocketChannel.pipeline().addLast()` 方法封装责任链
+服务端启动需要创建 `ServerBootstrap` 对象，并完成**初始化线程模型**，**配置IO模型**和**添加业务处理逻辑（Handler）**。在添加业务处理逻辑时，
+调用的是 `childHandler()` 方法添加了一个 `ChannelInitializer` Handler，代码示例如下
 
 ```java
 // 负责服务端的启动
 ServerBootstrap serverBootstrap = new ServerBootstrap();
 
 // 以下两个对象可以看做是两个线程组
-// 负责监听端口，接受新的链接
+// boss线程组负责监听端口，接受新的连接
 NioEventLoopGroup boss = new NioEventLoopGroup();
-// 负责读取数据
+// worker线程组负责读取数据
 NioEventLoopGroup worker = new NioEventLoopGroup();
 
 // 配置线程组并指定NIO模型
 serverBootstrap.group(boss, worker).channel(NioServerSocketChannel.class)
-        // 定义后续每个 新链接 的读写业务逻辑
+        // 定义后续每个 新连接 的读写业务逻辑
         .childHandler(new ChannelInitializer<NioSocketChannel>() {
             @Override
             protected void initChannel(NioSocketChannel nioSocketChannel) throws Exception {
-                nioSocketChannel.pipeline().addLast(new StringDecoder())
+                nioSocketChannel.pipeline()
+                        // 添加业务处理逻辑
                         .addLast(new SimpleChannelInboundHandler<String>() {
                             @Override
                             protected void channelRead0(ChannelHandlerContext channelHandlerContext, String msg) throws Exception {
@@ -36,7 +36,13 @@ serverBootstrap.group(boss, worker).channel(NioServerSocketChannel.class)
         });
 ```
 
-客户端与服务端启动类似，创建的是 `Bootstrap` 对象，同样需要初始化以上三个对象信息
+其中 `nioSocketChannel.pipeline()` 获取 `PipeLine` 对象，调用方法 `addLast()` 添加需要的业务处理逻辑，这里采用的是**责任链模式**，
+会将每个Handler作为一个节点进行处理
+
+#### 1.1 创建客户端
+
+客户端与服务端启动类似，不同的是，客户端需要创建 `Bootstrap` 对象来启动，并指定一个客户端线程组，
+相同的是都需要完成**初始化线程模型**，**配置IO模型**和**添加业务处理逻辑（Handler）**， 示例代码如下
 
 ```java
 // 负责客户端的启动
@@ -50,7 +56,14 @@ bootstrap.group(group).channel(NioSocketChannel.class)
         .handler(new ChannelInitializer<Channel>() {
             @Override
             protected void initChannel(Channel channel) throws Exception {
-                channel.pipeline().addLast(new StringEncoder());
+                channel.pipeline()
+                    // 添加业务处理逻辑
+                    .addLast(new SimpleChannelInboundHandler<String>() {
+                            @Override
+                            protected void channelRead0(ChannelHandlerContext channelHandlerContext, String msg) throws Exception {
+                                System.out.println(msg);
+                            }
+                    });
             }
         });
 ```
