@@ -9,7 +9,9 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import netty.book.practice.command.ConsoleCommandManger;
+import netty.book.practice.handler.MyIdleStateHandler;
 import netty.book.practice.handler.SplitHandler;
+import netty.book.practice.handler.client.HeartBeatHandler;
 import netty.book.practice.protocol.request.MessageRequestPacket;
 
 import java.util.Date;
@@ -45,9 +47,13 @@ public class NettyClient {
                     @Override
                     protected void initChannel(SocketChannel socketChannel) {
                         socketChannel.pipeline()
+                                // 空闲检测
+                                .addLast(new MyIdleStateHandler())
                                 .addLast(new SplitHandler())
                                 .addLast(PACKET_CODEC_HANDLER)
-                                .addLast(CLIENT_HANDLER);
+                                .addLast(CLIENT_HANDLER)
+                                // 心跳Handler
+                                .addLast(new HeartBeatHandler());
 //                                .addLast(new PacketEncoder());
                     }
                 });
@@ -90,10 +96,14 @@ public class NettyClient {
         new Thread(() -> {
             Scanner scanner = new Scanner(System.in);
 
-            while (!Thread.interrupted()) {
+            while (!Thread.interrupted() && channel.isActive()) {
                 // 执行命令
                 ConsoleCommandManger consoleCommandManger = new ConsoleCommandManger();
                 consoleCommandManger.execCommand(scanner, channel);
+            }
+
+            if (!channel.isActive()) {
+                System.out.println("连接已断开，请重启客户端重试");
             }
         }).start();
     }

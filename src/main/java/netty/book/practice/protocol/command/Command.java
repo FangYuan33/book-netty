@@ -36,7 +36,12 @@ public enum Command {
      * 发送群聊消息
      */
     SEND_GROUP_MESSAGE_REQUEST(Byte.valueOf("13")),
-    SEND_GROUP_MESSAGE_RESPONSE(Byte.valueOf("14"));
+    SEND_GROUP_MESSAGE_RESPONSE(Byte.valueOf("14")),
+    /**
+     * 心跳
+     */
+    HEART_BEAT_REQUEST(Byte.valueOf("15")),
+    HEART_BEAT_RESPONSE(Byte.valueOf("16"));
 
     private final Byte value;
 

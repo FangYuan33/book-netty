@@ -61,6 +61,9 @@ public class PacketCodeC {
         // 收发群组消息
         packetTypeMap.put(Command.SEND_GROUP_MESSAGE_REQUEST.getValue(), GroupMessageRequestPacket.class);
         packetTypeMap.put(Command.SEND_GROUP_MESSAGE_RESPONSE.getValue(), GroupMessageResponsePacket.class);
+        // 心跳
+        packetTypeMap.put(Command.HEART_BEAT_REQUEST.getValue(), HeartBeatRequestPacket.class);
+        packetTypeMap.put(Command.HEART_BEAT_RESPONSE.getValue(), HeartBeatResponsePacket.class);
     }
 
     /**

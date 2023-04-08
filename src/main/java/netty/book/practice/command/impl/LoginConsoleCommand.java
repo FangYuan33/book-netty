@@ -18,7 +18,7 @@ public class LoginConsoleCommand implements ConsoleCommand {
 
     @Override
     public void exec(Scanner scanner, Channel channel) {
-        if (!SessionUtil.hasLogin(channel)) {
+        if (!SessionUtil.hasLogin(channel) && channel.isActive()) {
             System.out.println("输入用户名登录: ");
             String userName = scanner.nextLine();
 
@@ -33,6 +33,8 @@ public class LoginConsoleCommand implements ConsoleCommand {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+        } else if (!channel.isActive()) {
+            System.out.println("连接已经失效");
         } else {
             System.out.println("已登录成功，无需重复登录");
         }

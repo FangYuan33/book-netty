@@ -49,6 +49,9 @@ public class ClientHandler extends SimpleChannelInboundHandler<Packet> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Packet msg) throws Exception {
-        map.get(msg.getCommand()).channelRead(ctx, msg);
+        SimpleChannelInboundHandler<? extends Packet> handler = map.get(msg.getCommand());
+        if (handler != null) {
+            handler.channelRead(ctx, msg);
+        }
     }
 }
