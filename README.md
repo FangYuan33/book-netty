@@ -6,7 +6,7 @@ Netty是一个异步基于**事件驱动**的**高性能网络通信**框架，�
 ### 1. 创建服务端
 
 服务端启动需要创建 `ServerBootstrap` 对象，并完成**初始化线程模型**，**配置IO模型**和**添加业务处理逻辑（Handler）**。在添加业务处理逻辑时，
-调用的是 `childHandler()` 方法添加了一个 `ChannelInitializer` Handler，代码示例如下
+调用的是 `childHandler()` 方法添加了一个 `ChannelInitializer`，代码示例如下
 
 ```java
 // 负责服务端的启动
@@ -36,13 +36,13 @@ serverBootstrap.group(boss, worker).channel(NioServerSocketChannel.class)
         });
 ```
 
-其中 `nioSocketChannel.pipeline()` 获取 `PipeLine` 对象，调用方法 `addLast()` 添加需要的业务处理逻辑，这里采用的是**责任链模式**，
-会将每个Handler作为一个节点进行处理
+其中 `nioSocketChannel.pipeline()` 用来获取 `PipeLine` 对象，调用方法 `addLast()` 添加必要的业务处理逻辑，这里采用的是**责任链模式**，
+会将每个Handler作为一个节点进行处理。
 
 #### 1.1 创建客户端
 
 客户端与服务端启动类似，不同的是，客户端需要创建 `Bootstrap` 对象来启动，并指定一个客户端线程组，
-相同的是都需要完成**初始化线程模型**，**配置IO模型**和**添加业务处理逻辑（Handler）**， 示例代码如下
+相同的是都需要完成**初始化线程模型**，**配置IO模型**和**添加业务处理逻辑（Handler）**， 代码示例如下
 
 ```java
 // 负责客户端的启动
@@ -52,7 +52,7 @@ NioEventLoopGroup group = new NioEventLoopGroup();
 
 // 指定线程组和NIO模型
 bootstrap.group(group).channel(NioSocketChannel.class)
-        // handler() 方法 业务处理逻辑
+        // handler() 方法封装业务处理逻辑
         .handler(new ChannelInitializer<Channel>() {
             @Override
             protected void initChannel(Channel channel) throws Exception {
@@ -68,12 +68,12 @@ bootstrap.group(group).channel(NioSocketChannel.class)
         });
 ```
 
-（下文中内容均以服务端处理逻辑为准）
+（注意：下文中内容均以服务端代码示例为准）
 
 ### 2. 编码和解码
 
 客户端与服务端进行通信，通信的消息是以**二进制字节流**的形式通过 `Channel` 进行传递的，所以当我们在客户端封装好**Java业务对象**后，
-需要将其按照协议转换成**字节数组**，并且当服务端接受到该**二进制字节流**时，需要将其再次转换成**Java业务对象**进行逻辑处理，
+需要将其按照协议转换成**字节数组**，并且当服务端接受到该**二进制字节流**时，需要将其根据协议再次解码成**Java业务对象**进行逻辑处理，
 这就是**编码和解码**的过程。Netty 为我们提供了 `MessageToByteEncoder` 用于编码，`ByteToMessageDecoder` 用于解码。
 
 #### 2.1 MessageToByteEncoder
@@ -142,8 +142,8 @@ public class TcpDecoder extends ByteToMessageDecoder {
 #### 2.3 注意要点
 
 ByteBuf默认情况下使用的是**堆外内存**，不进行内存释放会发生内存溢出。不过 `ByteToMessageDecoder` 和 `MessageToByteEncoder` 这两个解码和编码
-`Handler` 会自动帮我们完成内存释放的操作，无需再次手动释放。因为我们实现的 `encode()` 和 `decode()` 方法只是这两个 `Handler` 源码中的一个环节，
-最终会在 finally 代码块中完成对内存的释放，具体内容可阅读 `MessageToByteEncoder` 中第99行 `write()` 方法源码
+`Handler` 会自动帮我们完成内存释放的操作，无需再次手动释放。因为我们实现的 `encode()` 和 `decode()` 方法只是这两个 `Handler` 源码中执行的一个环节，
+最终会在 finally 代码块中完成对内存的释放，具体内容可阅读 `MessageToByteEncoder` 中第99行 `write()` 方法源码。
 
 #### 2.4 在服务端中添加编码解码Handler
 
@@ -153,7 +153,7 @@ serverBootstrap.group(boss, worker).channel(NioServerSocketChannel.class)
             @Override
             protected void initChannel(NioSocketChannel nioSocketChannel) throws Exception {
                 nioSocketChannel.pipeline()
-                        // 接收到进行解码
+                        // 接收到请求时进行解码
                         .addLast(new TcpDecoder(serializer))
                         // 发送请求时进行编码
                         .addLast(new TcpEncoder(serializer));
@@ -166,7 +166,7 @@ serverBootstrap.group(boss, worker).channel(NioServerSocketChannel.class)
 在Netty框架中，客户端与服务端的每个连接都对应着一个 `Channel`，而这个 `Channel` 的所有处理逻辑都封装在一个叫作 `ChannelPipeline` 的对象里。
 `ChannelPipeline` 是一个双向链表，它使用的是**责任链模式**，每个链表节点都是一个 `Handler`，能通它能获取 `Channel` 相关的上下文信息(ChannelHandlerContext)。
 Netty为我们提供了多种读取 `Channel` 中数据的 `Handler`，其中比较常用的是 `ChannelInboundHandlerAdapter` 和 `SimpleChannelInboundHandler`，
-下文中我们以读取心跳消息为例
+下文中我们以读取心跳消息为例。
 
 #### 3.1 ChannelInboundHandlerAdapter
 
@@ -324,9 +324,9 @@ public class LifeCycleHandler extends ChannelInboundHandlerAdapter {
 ### 5. 解决粘包和半包问题
 
 即使我们发送消息的时候是以 `ByteBuf` 的形式发送的，但是到了底层操作系统，仍然是以**字节流**的形式对数据进行发送的，而且服务端也以**字节流**的形式读取，
-因此在服务端对字节流进行拼接时，可能就会造成发送时 `ByteBuf` 与读取时的 `ByteBuf` 不对等的情况，这就是所谓的粘包和半包现象。
+因此在服务端对字节流进行拼接时，可能就会造成发送时 `ByteBuf` 与读取时的 `ByteBuf` 不对等的情况，这就是所谓的粘包或半包现象。
 
-以代码中测试的粘包现象为例，当客户端频繁的向服务端发送心跳消息时，读取到的ByteBuf信息如下
+以如下情况为例，当客户端频繁的向服务端发送心跳消息时，读取到的ByteBuf信息如下，其中一个心跳请求是用红框圈出的部分
 
 ![img.png](img.png)
 
@@ -397,7 +397,7 @@ serverBootstrap.group(boss, worker).channel(NioServerSocketChannel.class)
 #### 6.1 Handler对单例模式的应用
 
 Netty 在每次有新连接到来的时候，都会调用 `ChannelInitializer` 的 `initChannel()` 方法，会将其中相关的 `Handler` 都创建一次，
-如果其中的 `Handler` 是无状态能够通用的，可以将其改成单例，这样就能够在每次连接建立时，避免多次创建相同的对象。
+如果其中的 `Handler` 是无状态且能够通用的，可以将其改成单例，这样就能够在每次连接建立时，避免多次创建相同的对象。
 
 以如下服务端代码为例，包含如下Handler，可以将编码解码、以及业务处理Handler都定义成Spring单例bean的形式注入进来，
 这样就能够完成对象的复用而无需每次建立连接都创建相同的对象了
@@ -489,7 +489,7 @@ public class ServerHandlers extends SimpleChannelInboundHandler<Message> {
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, Packet msg) throws Exception {
+    protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws Exception {
         // 调用 channelRead() 方法完成业务逻辑处理
         map.get(msg.getMessageType()).channelRead(ctx, msg);
     }
@@ -552,7 +552,7 @@ public class MessageCodecHandler extends MessageToMessageCodec<ByteBuf, Message>
 }
 ```
 
-改造完成后，服务端代码如下，将其放在业务处理Handler前即可，调用完业务Handler逻辑，会对它进行编码发送
+改造完成后，服务端代码如下，将其放在业务处理Handler前即可，调用完业务Handler逻辑，会执行编码逻辑
 
 ```java
 ServerBootstrap b = new ServerBootstrap();
@@ -594,9 +594,9 @@ protected void channelRead(ChannelHandlerContext ctx, Object message) {
 
 #### 6.5 空闲"假死"检测Handler
 
-如果在某一端（客户端或服务端）看来，底层的TCP连接已经断开，但是另一端服务并没有捕获到，因此它会认为这条连接仍然存在，这就是**连接"假死"现象**。
-这会造成的问题就是，对于服务端来说，每个连接连接都会耗费CPU和内存资源，过多的假死连接会造成性能下降和服务崩溃；对客户端来说，
-连接假死会使得发往服务端的请求都是超时状态，所以需要尽可能避免假死现象的发生。
+如果底层的TCP连接已经断开，但是另一端服务并没有捕获到，在某一端（客户端或服务端）看来会认为这条连接仍然存在，这就是**连接"假死"现象**。
+这造成的问题就是，对于服务端来说，每个连接连接都会耗费CPU和内存资源，过多的假死连接会造成性能下降和服务崩溃；对客户端来说，
+连接假死会使得发往服务端的请求都会超时，所以需要尽可能避免假死现象的发生。
 
 造成假死的原因可能是公网丢包、客户端或服务端网络故障等，Netty为我们提供了 `IdleStateHandler` 来解决超时假死问题，示例代码如下
 
@@ -619,9 +619,9 @@ public class MyIdleStateHandler extends IdleStateHandler {
 ```
 
 其构造方法中有三个参数来分别指定读、写和读写超时时间，当指定0时不判断超时，除此之外Netty也有专门用来处理读和写超时的Handler，
-分别为 `ReadTimeoutHandler`, `WriteTimeoutHandler`
+分别为 `ReadTimeoutHandler`, `WriteTimeoutHandler`。
 
-将其添加到服务端Handler的首位即可
+将其添加到服务端 `Handler` 的首位即可
 
 ```java
 ServerBootstrap b = new ServerBootstrap();
