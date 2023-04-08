@@ -644,3 +644,13 @@ b.group(bossGroup, workerGroup)
             }
         });
 ```
+
+### 其他
+
+![](images/inoutbound.jpg)
+
+InboundHandler的执行顺序与添加的责任链节点顺序一致，而OutboundHandler的执行顺序则相反。
+
+### 巨人的肩膀
+
+- 《Netty即时聊天实战与底层原理》
