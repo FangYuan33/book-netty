@@ -370,6 +370,8 @@ public class SplitHandler extends LengthFieldBasedFrameDecoder {
 }
 ```
 
+之后将其添加到Handler中即可，如果遇到其他协议，更改其中参数或查看 `LengthFieldBasedFrameDecoder` 的JavaDoc中详细描述。
+
 #### 5.2 在服务端中添加拆包Handler
 
 ```java
