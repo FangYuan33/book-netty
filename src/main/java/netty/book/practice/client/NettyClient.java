@@ -22,7 +22,7 @@ import static netty.book.practice.serialize.codec.PacketCodecHandler.PACKET_CODE
 /**
  * Netty 客户端
  *
- * @author wangyilong13
+ * @author FangYuan
  * @since 2023-03-28 20:25:46
  */
 public class NettyClient {

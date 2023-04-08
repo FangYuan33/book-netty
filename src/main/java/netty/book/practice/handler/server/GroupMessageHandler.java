@@ -33,7 +33,12 @@ public class GroupMessageHandler extends SimpleChannelInboundHandler<GroupMessag
         // 获取群组
         ChannelGroup channelGroup = SessionUtil.getChannelGroup(msg.getGroupId());
 
-        // 回写消息
-        channelGroup.writeAndFlush(responsePacket);
+        if (channelGroup != null) {
+            // 回写消息
+            channelGroup.writeAndFlush(responsePacket);
+        } else {
+            responsePacket.setMessage("该群组不存在");
+            ctx.channel().writeAndFlush(responsePacket);
+        }
     }
 }
