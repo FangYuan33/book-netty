@@ -11,13 +11,8 @@ import netty.book.practice.handler.SplitHandler;
 import java.util.Date;
 
 import static netty.book.practice.handler.server.AuthHandler.AUTH_HANDLER;
-import static netty.book.practice.handler.server.CreateGroupHandler.CREATE_GROUP_HANDLER;
-import static netty.book.practice.handler.server.GroupMessageHandler.GROUP_MESSAGE_HANDLER;
-import static netty.book.practice.handler.server.JoinGroupHandler.JOIN_GROUP_HANDLER;
-import static netty.book.practice.handler.server.ListGroupMembersHandler.LIST_GROUP_MEMBERS_HANDLER;
 import static netty.book.practice.handler.server.LoginHandler.LOGIN_HANDLER;
-import static netty.book.practice.handler.server.MessageHandler.MESSAGE_HANDLER;
-import static netty.book.practice.handler.server.QuitGroupHandler.QUIT_GROUP_HANDLER;
+import static netty.book.practice.handler.server.ServerHandler.SERVER_HANDLER;
 import static netty.book.practice.serialize.codec.PacketCodecHandler.PACKET_CODEC_HANDLER;
 
 /**
@@ -42,9 +37,8 @@ public class NettyServer {
                                 // 解决粘包和半包问题
                                 .addLast(new SplitHandler())
                                 .addLast(PACKET_CODEC_HANDLER)
-                                .addLast(LOGIN_HANDLER, AUTH_HANDLER, MESSAGE_HANDLER)
-                                .addLast(CREATE_GROUP_HANDLER, JOIN_GROUP_HANDLER, QUIT_GROUP_HANDLER)
-                                .addLast(LIST_GROUP_MEMBERS_HANDLER, GROUP_MESSAGE_HANDLER);
+                                .addLast(LOGIN_HANDLER, AUTH_HANDLER)
+                                .addLast(SERVER_HANDLER);
 //                                .addLast(new PacketEncoder());
                     }
                 });

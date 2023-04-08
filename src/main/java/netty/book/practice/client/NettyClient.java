@@ -11,20 +11,12 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import netty.book.practice.command.ConsoleCommandManger;
 import netty.book.practice.handler.SplitHandler;
 import netty.book.practice.protocol.request.MessageRequestPacket;
-import netty.book.practice.serialize.codec.PacketDecoder;
-import netty.book.practice.serialize.codec.PacketEncoder;
 
 import java.util.Date;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
-import static netty.book.practice.handler.client.CreateGroupHandler.CREATE_GROUP_HANDLER;
-import static netty.book.practice.handler.client.GroupMessageHandler.GROUP_MESSAGE_HANDLER;
-import static netty.book.practice.handler.client.JoinGroupHandler.JOIN_GROUP_HANDLER;
-import static netty.book.practice.handler.client.ListGroupMembersHandler.LIST_GROUP_MEMBERS_HANDLER;
-import static netty.book.practice.handler.client.LoginHandler.LOGIN_HANDLER;
-import static netty.book.practice.handler.client.QuitGroupHandler.QUIT_GROUP_HANDLER;
-import static netty.book.practice.handler.client.MessageHandler.MESSAGE_HANDLER;
+import static netty.book.practice.handler.client.ClientHandler.CLIENT_HANDLER;
 import static netty.book.practice.serialize.codec.PacketCodecHandler.PACKET_CODEC_HANDLER;
 
 /**
@@ -55,9 +47,7 @@ public class NettyClient {
                         socketChannel.pipeline()
                                 .addLast(new SplitHandler())
                                 .addLast(PACKET_CODEC_HANDLER)
-                                .addLast(LOGIN_HANDLER, MESSAGE_HANDLER, CREATE_GROUP_HANDLER)
-                                .addLast(JOIN_GROUP_HANDLER, QUIT_GROUP_HANDLER, LIST_GROUP_MEMBERS_HANDLER)
-                                .addLast(GROUP_MESSAGE_HANDLER);
+                                .addLast(CLIENT_HANDLER);
 //                                .addLast(new PacketEncoder());
                     }
                 });
