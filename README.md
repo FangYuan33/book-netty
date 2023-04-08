@@ -220,3 +220,7 @@ Netty 在每次有新连接到来的时候，都会调用 `ChannelInitializer` �
 
 `io.netty.channel.ChannelPipelineException: netty.book.practice.handler.server.LoginHandler is not a @Sharable handler, 
 so can't be added or removed multiple times`
+
+`SplitHanlder` 不能进行单例处理，因为它的内部实现与每个 `Channel` 都有关，每个 `SplitHandler` 都需要维持每个 `Channel` 读到的数据，
+即它是有状态的。
+

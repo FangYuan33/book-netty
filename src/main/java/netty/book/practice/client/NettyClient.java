@@ -25,6 +25,7 @@ import static netty.book.practice.handler.client.ListGroupMembersHandler.LIST_GR
 import static netty.book.practice.handler.client.LoginHandler.LOGIN_HANDLER;
 import static netty.book.practice.handler.client.QuitGroupHandler.QUIT_GROUP_HANDLER;
 import static netty.book.practice.handler.client.MessageHandler.MESSAGE_HANDLER;
+import static netty.book.practice.serialize.codec.PacketCodecHandler.PACKET_CODEC_HANDLER;
 
 /**
  * Netty 客户端
@@ -53,11 +54,11 @@ public class NettyClient {
                     protected void initChannel(SocketChannel socketChannel) {
                         socketChannel.pipeline()
                                 .addLast(new SplitHandler())
-                                .addLast(new PacketDecoder())
+                                .addLast(PACKET_CODEC_HANDLER)
                                 .addLast(LOGIN_HANDLER, MESSAGE_HANDLER, CREATE_GROUP_HANDLER)
                                 .addLast(JOIN_GROUP_HANDLER, QUIT_GROUP_HANDLER, LIST_GROUP_MEMBERS_HANDLER)
-                                .addLast(GROUP_MESSAGE_HANDLER)
-                                .addLast(new PacketEncoder());
+                                .addLast(GROUP_MESSAGE_HANDLER);
+//                                .addLast(new PacketEncoder());
                     }
                 });
 

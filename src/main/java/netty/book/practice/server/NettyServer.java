@@ -7,8 +7,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import netty.book.practice.handler.SplitHandler;
-import netty.book.practice.serialize.codec.PacketDecoder;
-import netty.book.practice.serialize.codec.PacketEncoder;
 
 import java.util.Date;
 
@@ -20,6 +18,7 @@ import static netty.book.practice.handler.server.ListGroupMembersHandler.LIST_GR
 import static netty.book.practice.handler.server.LoginHandler.LOGIN_HANDLER;
 import static netty.book.practice.handler.server.MessageHandler.MESSAGE_HANDLER;
 import static netty.book.practice.handler.server.QuitGroupHandler.QUIT_GROUP_HANDLER;
+import static netty.book.practice.serialize.codec.PacketCodecHandler.PACKET_CODEC_HANDLER;
 
 /**
  * Netty 服务端
@@ -42,11 +41,11 @@ public class NettyServer {
 //                                .addLast(new LifeCycleHandler())
                                 // 解决粘包和半包问题
                                 .addLast(new SplitHandler())
-                                .addLast(new PacketDecoder())
+                                .addLast(PACKET_CODEC_HANDLER)
                                 .addLast(LOGIN_HANDLER, AUTH_HANDLER, MESSAGE_HANDLER)
                                 .addLast(CREATE_GROUP_HANDLER, JOIN_GROUP_HANDLER, QUIT_GROUP_HANDLER)
-                                .addLast(LIST_GROUP_MEMBERS_HANDLER, GROUP_MESSAGE_HANDLER)
-                                .addLast(new PacketEncoder());
+                                .addLast(LIST_GROUP_MEMBERS_HANDLER, GROUP_MESSAGE_HANDLER);
+//                                .addLast(new PacketEncoder());
                     }
                 });
 
