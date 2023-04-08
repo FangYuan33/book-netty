@@ -589,3 +589,56 @@ protected void channelRead(ChannelHandlerContext ctx, Object message) {
     });
 }
 ```
+
+#### 6.5 空闲"假死"检测Handler
+
+如果在某一端（客户端或服务端）看来，底层的TCP连接已经断开，但是另一端服务并没有捕获到，因此它会认为这条连接仍然存在，这就是**连接"假死"现象**。
+这会造成的问题就是，对于服务端来说，每个连接连接都会耗费CPU和内存资源，过多的假死连接会造成性能下降和服务崩溃；对客户端来说，
+连接假死会使得发往服务端的请求都是超时状态，所以需要尽可能避免假死现象的发生。
+
+造成假死的原因可能是公网丢包、客户端或服务端网络故障等，Netty为我们提供了 `IdleStateHandler` 来解决超时假死问题，示例代码如下
+
+```java
+public class MyIdleStateHandler extends IdleStateHandler {
+
+    private static final int READER_IDLE_TIME = 15;
+
+    public MyIdleStateHandler() {
+        // 读超时时间、写超时时间、读写超时时间 指定0值不判断超时
+        super(READER_IDLE_TIME, 0, 0, TimeUnit.SECONDS);
+    }
+
+    @Override
+    protected void channelIdle(ChannelHandlerContext ctx, IdleStateEvent evt) {
+        System.out.println(READER_IDLE_TIME + "秒内没有读到数据，关闭连接");
+        ctx.channel().close();
+    }
+}
+```
+
+其构造方法中有三个参数来分别指定读、写和读写超时时间，当指定0时不判断超时，除此之外Netty也有专门用来处理读和写超时的Handler，
+分别为 `ReadTimeoutHandler`, `WriteTimeoutHandler`
+
+将其添加到服务端Handler的首位即可
+
+```java
+ServerBootstrap b = new ServerBootstrap();
+b.group(bossGroup, workerGroup)
+        .channel(NioServerSocketChannel.class)
+        .childHandler(new ChannelInitializer<SocketChannel>() {
+            @Override
+            public void initChannel(SocketChannel ch) throws Exception {
+                ch.pipeline()
+                        // 超时判断Handler
+                        .addLast(new MyIdleStateHandler())
+                        // 拆包Handler
+                        .addLast(new SplitHandler())
+                        // 日志Handler
+                        .addLast(new LoggingHandler(LogLevel.INFO))
+                        // 解码、编码Handler
+                        .addLast(messageCodecHandler)
+                        // serverHandlers 封装了 心跳、格口状态、设备状态、RFID上报、扫码上报和分拣结果上报Handler
+                        .addLast(serverHandlers);
+            }
+        });
+```
