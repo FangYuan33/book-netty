@@ -518,6 +518,60 @@ b.group(bossGroup, workerGroup)
         });
 ```
 
+#### 6.3 合并编码、解码Handler
+
+Netty 对编码解码提供了统一处理Handler是`MessageToMessageCodec`，这样我们就能将编码和解码的Handler合并成一个添加接口，代码示例如下
+
+```java
+@ChannelHandler.Sharable
+public class MessageCodecHandler extends MessageToMessageCodec<ByteBuf, Message> {
+
+    /**
+     * 序列化器
+     */
+    @Resourse
+    private Serializer serializer;
+
+    @Override
+    protected void encode(ChannelHandlerContext ctx, Message msg, List<Object> out) throws Exception {
+        // 将字节数组写入 ByteBuf 
+        ByteBuf byteBuf = ctx.alloc().ioBuffer();
+        serializer.serialize(byteBuf, msg);
+
+        // 这个编码也需要添加到List中
+        out.add(byteBuf);
+    }
+
+    @Override
+    protected void decode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out) {
+        // 根据协议自定义的解码逻辑将其解码成Java对象，并添加到List中
+        out.add(serializer.deSerialize(msg));
+    }
+}
+```
+
+改造完成后，服务端代码如下，将其放在业务处理Handler前即可，调用完业务Handler逻辑，会对它进行编码发送
+
+```java
+ServerBootstrap b = new ServerBootstrap();
+b.group(bossGroup, workerGroup)
+        .channel(NioServerSocketChannel.class)
+        .childHandler(new ChannelInitializer<SocketChannel>() {
+            @Override
+            public void initChannel(SocketChannel ch) throws Exception {
+                ch.pipeline()
+                        // 拆包Handler
+                        .addLast(new SplitHandler())
+                        // 日志Handler
+                        .addLast(new LoggingHandler(LogLevel.INFO))
+                        // 解码、编码Handler
+                        .addLast(messageCodecHandler)
+                        // serverHandlers 封装了 心跳、格口状态、设备状态、RFID上报、扫码上报和分拣结果上报Handler
+                        .addLast(serverHandlers);
+            }
+        });
+```
+
 #### 减少NIO线程阻塞
 
 对于耗时的业务操作，需要将它们都丢到**业务线程池中去处理**，因为单个NIO线程会管理很多 `Channel` ，
