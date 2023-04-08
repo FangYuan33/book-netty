@@ -390,98 +390,73 @@ serverBootstrap.group(boss, worker).channel(NioServerSocketChannel.class)
         });
 ```
 
-### ChannelHandler的生命周期
+### 6. Netty性能优化
 
-```java
-public class LifeCycleHandler extends ChannelInboundHandlerAdapter {
-    /**
-     * 当检测到新连接之后，调用 ch.pipeline().addLast(...); 之后的回调
-     * 表示当前channel中成功添加了 Handler
-     */
-    @Override
-    public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("逻辑处理器被添加时回调：handlerAdded()");
-        super.handlerAdded(ctx);
-    }
-
-    /**
-     * 表示当前channel的所有逻辑处理已经和某个NIO线程建立了绑定关系
-     * 这里的NIO线程通常指的是 NioEventLoop
-     */
-    @Override
-    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("channel 绑定到线程(NioEventLoop)时回调：channelRegistered()");
-        super.channelRegistered(ctx);
-    }
-
-    /**
-     * 当Channel的所有业务逻辑链准备完毕，链接被激活时
-     */
-    @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("channel 准备就绪时回调：channelActive()");
-        super.channelActive(ctx);
-    }
-
-    /**
-     * 客户端向服务端发送数据，表示有数据可读时，就会回调该方法
-     */
-    @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        System.out.println("channel 有数据可读时回调：channelRead()");
-        super.channelRead(ctx, msg);
-    }
-
-    /**
-     * 服务端每完整的读完一次数据，都会回调该方法
-     */
-    @Override
-    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("channel 某次数据读完时回调：channelReadComplete()");
-        super.channelReadComplete(ctx);
-    }
-
-    // ---断开链接时---
-
-    /**
-     * 该客户端与服务端的连接被关闭时回调
-     */
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("channel 被关闭时回调：channelInactive()");
-        super.channelInactive(ctx);
-    }
-
-    /**
-     * 对应的NIO线程移除了对这个链接的处理
-     */
-    @Override
-    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("channel 取消线程(NioEventLoop) 的绑定时回调: channelUnregistered()");
-        super.channelUnregistered(ctx);
-    }
-
-    /**
-     * 为该链接添加的所有业务逻辑Handler被移除时
-     */
-    @Override
-    public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("逻辑处理器被移除时回调：handlerRemoved()");
-        super.handlerRemoved(ctx);
-    }
-}
-```
-
-### 优化
+#### 6.1 Handler对单例模式的应用
 
 Netty 在每次有新连接到来的时候，都会调用 `ChannelInitializer` 的 `initChannel()` 方法，会将其中相关的 `Handler` 都创建一次，
 如果其中的 `Handler` 是无状态能够通用的，可以将其改成单例，这样就能够在每次连接建立时，避免多次创建相同的对象。
 
+以如下服务端代码为例，包含如下Handler，可以将编码解码、以及业务处理Handler都定义成Spring单例bean的形式注入进来，
+这样就能够完成对象的复用而无需每次建立连接都创建相同的对象了
+
+```java
+ServerBootstrap b = new ServerBootstrap();
+b.group(bossGroup, workerGroup)
+        .channel(NioServerSocketChannel.class)
+        .childHandler(new ChannelInitializer<SocketChannel>() {
+            @Override
+            public void initChannel(SocketChannel ch) throws Exception {
+                ch.pipeline()
+                        // 拆包Handler
+                        .addLast(new SplitHandler())
+                        // 日志Handler
+                        .addLast(new LoggingHandler(LogLevel.INFO))
+                        // 解码Handler
+                        .addLast(new TcpDecoder(serializer))
+                        // 心跳、格口状态、设备状态、RFID上报、扫码上报和分拣结果上报Handler
+                        .addLast(new HeartBeatHandler(), new ChuteStatusHandler())
+                        .addLast(new DeviceStatusReceiveHandler(), new RfidBindReceiveHandler())
+                        .addLast(new ScanReceiveHandler(), new SortResultHandler())
+                        // 编码Handler
+                        .addLast(new TcpEncoder(serializer));
+            }
+        });
+```
+
+改造完成后如下
+
+```java
+ServerBootstrap b = new ServerBootstrap();
+b.group(bossGroup, workerGroup)
+        .channel(NioServerSocketChannel.class)
+        .childHandler(new ChannelInitializer<SocketChannel>() {
+            @Override
+            public void initChannel(SocketChannel ch) throws Exception {
+                ch.pipeline()
+                        // 拆包Handler
+                        .addLast(new SplitHandler())
+                        // 日志Handler
+                        .addLast(new LoggingHandler(LogLevel.INFO))
+                        // 解码Handler
+                        .addLast(tcpDecoder)
+                        // 心跳、格口状态、设备状态、RFID上报、扫码上报和分拣结果上报Handler
+                        .addLast(heartBeatHandler, chuteStatusHandler)
+                        .addLast(deviceStatusReceiveHandler, rfidBindReceiveHandler)
+                        .addLast(scanReceiveHandler, sortResultHandler)
+                        // 编码Handler
+                        .addLast(tcpEncoder);
+            }
+        });
+```
+
+不过需要注意在每个单例Handler的类上标注 `@ChannelHandler.Sharable` 注解，否则会抛出如下异常
+
 `io.netty.channel.ChannelPipelineException: netty.book.practice.handler.server.LoginHandler is not a @Sharable handler, 
 so can't be added or removed multiple times`
 
-`SplitHanlder` 不能进行单例处理，因为它的内部实现与每个 `Channel` 都有关，每个 `SplitHandler` 都需要维持每个 `Channel` 读到的数据，
-即它是有状态的。
+另外，`SplitHanlder` 不能进行单例处理，因为它的内部实现与每个 `Channel` 都有关，每个 `SplitHandler` 都需要维持每个 `Channel` 读到的数据，
+即它是**有状态的**。
 
 #### 减少NIO线程阻塞
 
