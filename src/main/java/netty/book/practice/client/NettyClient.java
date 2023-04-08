@@ -10,7 +10,6 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import netty.book.practice.command.ConsoleCommandManger;
 import netty.book.practice.handler.SplitHandler;
-import netty.book.practice.handler.client.*;
 import netty.book.practice.protocol.request.MessageRequestPacket;
 import netty.book.practice.serialize.codec.PacketDecoder;
 import netty.book.practice.serialize.codec.PacketEncoder;
@@ -25,7 +24,7 @@ import static netty.book.practice.handler.client.JoinGroupHandler.JOIN_GROUP_HAN
 import static netty.book.practice.handler.client.ListGroupMembersHandler.LIST_GROUP_MEMBERS_HANDLER;
 import static netty.book.practice.handler.client.LoginHandler.LOGIN_HANDLER;
 import static netty.book.practice.handler.client.QuitGroupHandler.QUIT_GROUP_HANDLER;
-import static netty.book.practice.handler.server.MessageHandler.MESSAGE_HANDLER;
+import static netty.book.practice.handler.client.MessageHandler.MESSAGE_HANDLER;
 
 /**
  * Netty 客户端

@@ -19,7 +19,7 @@ public class MessageHandler extends SimpleChannelInboundHandler<MessageResponseP
     /**
      * 单例
      */
-    private static final MessageHandler MESSAGE_HANDLER = new MessageHandler();
+    public static final MessageHandler MESSAGE_HANDLER = new MessageHandler();
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, MessageResponsePacket msg) {
