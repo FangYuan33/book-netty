@@ -458,6 +458,66 @@ so can't be added or removed multiple times`
 另外，`SplitHanlder` 不能进行单例处理，因为它的内部实现与每个 `Channel` 都有关，每个 `SplitHandler` 都需要维持每个 `Channel` 读到的数据，
 即它是**有状态的**。
 
+#### 6.2 缩短责任链调用
+
+对服务端来说，每次解码出来的Java对象在多个业务处理 `Handler` 中只会经过一个其中 `Handler` 完成业务处理，那么我们将所有业务相关的 `Handler`
+封装起来到一个Map中，每次只让它经过必要的Handler而不是经过整个责任链，那么便可以提高Netty处理请求的性能。
+
+定义如下 `ServerHandlers` 单例bean，并使用 **策略模式** 将对应的 `Handler` 管理起来，每次处理时根据消息类型获取对应的 `Handler` 来完成业务逻辑
+
+```java
+@ChannelHandler.Sharable
+public class ServerHandlers extends SimpleChannelInboundHandler<Message> {
+
+    @Resourse
+    private HeartBeatHandler heartBeatHandler;
+
+    /**
+     * 策略模式封装Handler，这样就能在回调 ServerHandler 的 channelRead0 方法时
+     * 找到具体的Handler，而不需要经过责任链的每个 Handler 节点，以此来提高性能
+     */
+    private final Map<Command, SimpleChannelInboundHandler<Message>> map;
+
+    public ServerHandler() {
+        map = new HashMap<>();
+
+        // key: 消息类型枚举 value: 对应的Handler
+        map.put(MessageType.HEART_BEAT, heartBeatHandler);
+        // ...
+    }
+
+    @Override
+    protected void channelRead0(ChannelHandlerContext ctx, Packet msg) throws Exception {
+        // 调用 channelRead() 方法完成业务逻辑处理
+        map.get(msg.getMessageType()).channelRead(ctx, msg);
+    }
+}
+```
+
+改造完成后，服务端代码如下，因为我们封装了平行的业务处理 `Handler`，所以代码很清爽
+
+```java
+ServerBootstrap b = new ServerBootstrap();
+b.group(bossGroup, workerGroup)
+        .channel(NioServerSocketChannel.class)
+        .childHandler(new ChannelInitializer<SocketChannel>() {
+            @Override
+            public void initChannel(SocketChannel ch) throws Exception {
+                ch.pipeline()
+                        // 拆包Handler
+                        .addLast(new SplitHandler())
+                        // 日志Handler
+                        .addLast(new LoggingHandler(LogLevel.INFO))
+                        // 解码Handler
+                        .addLast(tcpDecoder)
+                        // serverHandlers 封装了 心跳、格口状态、设备状态、RFID上报、扫码上报和分拣结果上报Handler
+                        .addLast(serverHandlers)
+                        // 编码Handler
+                        .addLast(tcpEncoder);
+            }
+        });
+```
+
 #### 减少NIO线程阻塞
 
 对于耗时的业务操作，需要将它们都丢到**业务线程池中去处理**，因为单个NIO线程会管理很多 `Channel` ，
