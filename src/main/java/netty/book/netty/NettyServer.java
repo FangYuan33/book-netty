@@ -22,14 +22,14 @@ public class NettyServer {
         ServerBootstrap serverBootstrap = new ServerBootstrap();
 
         // 以下两个对象可以看做是两个线程组
-        // 负责监听端口，接受新的链接
+        // 负责监听端口，接受新的连接
         NioEventLoopGroup boss = new NioEventLoopGroup();
         // 负责读取数据
         NioEventLoopGroup worker = new NioEventLoopGroup();
 
         // 配置线程组并指定NIO模型
         serverBootstrap.group(boss, worker).channel(NioServerSocketChannel.class)
-                // 定义后续每个 新链接 的读写业务逻辑
+                // 定义后续每个 新连接 的读写业务逻辑
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     @Override
                     protected void initChannel(NioSocketChannel nioSocketChannel) throws Exception {
@@ -52,11 +52,11 @@ public class NettyServer {
         });
         // attr() 方法 用于给 NioServerSocketChannel 维护一个 Map
         serverBootstrap.attr(AttributeKey.newInstance("serverName"), "nettyServer");
-        // childAttr() 方法 可以为每个链接都指定自定义的属性
+        // childAttr() 方法 可以为每个连接都指定自定义的属性
         serverBootstrap.childAttr(AttributeKey.newInstance("clientKey"), "clientValue");
         // option() 方法 用于给服务端Channel设置一些TCP参数 SO_BACKLOG 表示系统用于临时存放已完成三次握手的请求的队列的最大长度
         serverBootstrap.option(ChannelOption.SO_BACKLOG, 1024);
-        // childOption() 方法 用于给每个链接都设置一些TCP参数，SO_KEEPALIVE 表示是否开启TCP心跳机制
+        // childOption() 方法 用于给每个连接都设置一些TCP参数，SO_KEEPALIVE 表示是否开启TCP心跳机制
         serverBootstrap.childOption(ChannelOption.SO_KEEPALIVE, true);
         // TCP_NODELAY 表示是否开启Nagle算法
         serverBootstrap.childOption(ChannelOption.TCP_NODELAY, true);

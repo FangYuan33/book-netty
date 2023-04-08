@@ -17,10 +17,10 @@ public class IOServer {
         new Thread(() -> {
             while (true) {
                 try {
-                    // 1. 阻塞方法获取新链接
+                    // 1. 阻塞方法获取新连接
                     Socket socket = serverSocket.accept();
 
-                    // 2. 为每一个链接都创建一个线程来读取数据
+                    // 2. 为每一个连接都创建一个线程来读取数据
                     new Thread(() -> {
                         int len;
                         byte[] data = new byte[1024];

@@ -45,7 +45,7 @@ public class NettyClient {
 
         // attr() 方法 用于给NioSocketChannel指定一个Map 按需从其中取值
         bootstrap.attr(AttributeKey.newInstance("clientName"), "nettyClient");
-        // option() 方法用于指定一些TCP参数 CONNECT_TIMEOUT_MILLIS 指定链接超时的时间
+        // option() 方法用于指定一些TCP参数 CONNECT_TIMEOUT_MILLIS 指定连接超时的时间
         bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000);
         // SO_KEEPALIVE 表示是否开启TCP心跳机制
         bootstrap.option(ChannelOption.SO_KEEPALIVE, true);

@@ -62,14 +62,14 @@ public class NettyClient {
     }
 
     /**
-     * 链接服务端 失败后不断重试
+     * 连接服务端 失败后不断重试
      */
     private static void connect(Bootstrap bootstrap, String host, int port, int retry) {
         bootstrap.connect(host, port).addListener(future -> {
             if (future.isSuccess()) {
                 System.out.println(new Date() + ": 连接成功，准备登录");
 
-                // 链接成功后开启控制台读取消息
+                // 连接成功后开启控制台读取消息
                 startConsoleThread(((ChannelFuture) future).channel());
 
                 // 测试粘包和半包

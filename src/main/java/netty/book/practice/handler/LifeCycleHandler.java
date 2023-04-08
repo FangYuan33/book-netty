@@ -31,7 +31,7 @@ public class LifeCycleHandler extends ChannelInboundHandlerAdapter {
     }
 
     /**
-     * 当Channel的所有业务逻辑链准备完毕，链接被激活时
+     * 当Channel的所有业务逻辑链准备完毕，连接被激活时
      */
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -57,7 +57,7 @@ public class LifeCycleHandler extends ChannelInboundHandlerAdapter {
         super.channelReadComplete(ctx);
     }
 
-    // ---断开链接时---
+    // ---断开连接时---
 
     /**
      * 该客户端与服务端的连接被关闭时回调
@@ -69,7 +69,7 @@ public class LifeCycleHandler extends ChannelInboundHandlerAdapter {
     }
 
     /**
-     * 对应的NIO线程移除了对这个链接的处理
+     * 对应的NIO线程移除了对这个连接的处理
      */
     @Override
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
@@ -78,7 +78,7 @@ public class LifeCycleHandler extends ChannelInboundHandlerAdapter {
     }
 
     /**
-     * 为该链接添加的所有业务逻辑Handler被移除时
+     * 为该连接添加的所有业务逻辑Handler被移除时
      */
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
