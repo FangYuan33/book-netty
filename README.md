@@ -321,34 +321,73 @@ public class LifeCycleHandler extends ChannelInboundHandlerAdapter {
 }
 ```
 
-### 解决粘包和半包问题
+### 5. 解决粘包和半包问题
 
-即使我们发送消息的时候是以 `ByteBuf` 的形式发送的，但是到了底层操作系统，仍然是以字节流的形式对数据进行发送的，而且服务端也以字节流的形式读取，
-因此在服务端对字节流进行拼接时，可能就会造成发送时 `ByteBuf` 与读取时的 `ByteBuf` 不对等，这就会造成粘包和半包的现象
+即使我们发送消息的时候是以 `ByteBuf` 的形式发送的，但是到了底层操作系统，仍然是以**字节流**的形式对数据进行发送的，而且服务端也以**字节流**的形式读取，
+因此在服务端对字节流进行拼接时，可能就会造成发送时 `ByteBuf` 与读取时的 `ByteBuf` 不对等的情况，这就是所谓的粘包和半包现象。
 
-为了解决以上的问题，就需要在数据不足的时候等待读取，直到数据足够时，构成一个完整的数据包并进行业务处理。
-一般用基于长度的拆包器 `LengthFieldBasedFrameDecoder` 来进行拆包工作，代码实例如下，其中的三个参数比较重要，第一个参数指定是数据包的最大长度，
-第二个参数代表偏移多个字节能找到数据长度信息，第三个参数指的是长度信息的字节数
+以代码中测试的粘包现象为例，当客户端频繁的向服务端发送心跳消息时，读取到的ByteBuf信息如下
+
+![img.png](img.png)
+
+可以发现多个心跳请求"粘"在了一起，那么我们需要对它进行拆包处理，否则只会读取第一条心跳请求，之后的请求会全部失效
+
+Netty 为我们提供了基于长度的拆包器 `LengthFieldBasedFrameDecoder` 来进行拆包工作，它能对超过所需数据量的包进行拆分，
+也能在数据不足的时候等待读取，直到数据足够时，构成一个完整的数据包并进行业务处理。
+
+#### 5.1 LengthFieldBasedFrameDecoder
+
+以标准接口文档中的协议（图示）为准，代码示例如下，其中的四个参数比较重要，详细信息可见注释描述
+
+![](标准协议.png)
 
 ```java
 public class SplitHandler extends LengthFieldBasedFrameDecoder {
 
     /**
-     * 拆包处理器的方法
+     * 在协议中表示数据长度的字段在字节流首尾中的偏移量
      */
+    private static final Integer LENGTH_FIELD_OFFSET = 10;
+
+    /**
+     * 表示数据长度的字节长度
+     */
+    private static final Integer LENGTH_FIELD_LENGTH = 4;
+
+    /**
+     * 数据长度后边的头信息中的字节偏移量
+     */
+    private static final Integer LENGTH_ADJUSTMENT = 10;
+
+    /**
+     * 表示从第一个字节开始需要舍去的字节数，在我们的协议中，不需要进行舍去
+     */
+    private static final Integer INITIAL_BYTES_TO_STRIP = 0;
+
     public SplitHandler() {
-        // 最大长度 数据长度偏移量 表示该数据长度的字段字节数
-        super(Integer.MAX_VALUE, 7, 4);
+        super(Integer.MAX_VALUE, LENGTH_FIELD_OFFSET, LENGTH_FIELD_LENGTH, LENGTH_ADJUSTMENT, INITIAL_BYTES_TO_STRIP);
     }
 }
 ```
 
-将该Handler添加到责任链的头结点即可，如下
+#### 5.2 在服务端中添加拆包Handler
 
 ```java
-socketChannel.pipeline().addLast(new SplitHandler())
-        .addLast(new PacketDecoder()).addLast(new LoginHandler())
-        .addLast(new MessageHandler()).addLast(new PacketEncoder());
+serverBootstrap.group(boss, worker).channel(NioServerSocketChannel.class)
+        .childHandler(new ChannelInitializer<NioSocketChannel>() {
+            @Override
+            protected void initChannel(NioSocketChannel nioSocketChannel) throws Exception {
+                nioSocketChannel.pipeline()
+                    // 拆包Handler
+                    .addLast(new SplitHandler())
+                    // 接收到进行解码
+                    .addLast(new TcpDecoder(serializer))
+                    // 心跳业务处理Handler
+                    .addLast(new HeartBeatHandler())
+                    // 发送请求时进行编码
+                    .addLast(new TcpEncoder(serializer));
+            }
+        });
 ```
 
 ### ChannelHandler的生命周期
