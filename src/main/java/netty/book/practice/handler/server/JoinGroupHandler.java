@@ -1,5 +1,6 @@
 package netty.book.practice.handler.server;
 
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
@@ -13,7 +14,14 @@ import netty.book.practice.util.SessionUtil;
  * @author FangYuan
  * @since 2023-04-03 20:41:44
  */
+@ChannelHandler.Sharable
 public class JoinGroupHandler extends SimpleChannelInboundHandler<JoinGroupRequestPacket> {
+
+    /**
+     * 单例
+     */
+    public static final JoinGroupHandler JOIN_GROUP_HANDLER = new JoinGroupHandler();
+
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, JoinGroupRequestPacket msg) {
         // 要加入的群组ID

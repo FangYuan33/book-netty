@@ -19,6 +19,14 @@ import java.util.Date;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
+import static netty.book.practice.handler.client.CreateGroupHandler.CREATE_GROUP_HANDLER;
+import static netty.book.practice.handler.client.GroupMessageHandler.GROUP_MESSAGE_HANDLER;
+import static netty.book.practice.handler.client.JoinGroupHandler.JOIN_GROUP_HANDLER;
+import static netty.book.practice.handler.client.ListGroupMembersHandler.LIST_GROUP_MEMBERS_HANDLER;
+import static netty.book.practice.handler.client.LoginHandler.LOGIN_HANDLER;
+import static netty.book.practice.handler.client.QuitGroupHandler.QUIT_GROUP_HANDLER;
+import static netty.book.practice.handler.server.MessageHandler.MESSAGE_HANDLER;
+
 /**
  * Netty 客户端
  *
@@ -47,9 +55,9 @@ public class NettyClient {
                         socketChannel.pipeline()
                                 .addLast(new SplitHandler())
                                 .addLast(new PacketDecoder())
-                                .addLast(new LoginHandler(), new MessageHandler(), new CreateGroupHandler())
-                                .addLast(new JoinGroupHandler(), new QuitGroupHandler(), new ListGroupMembersHandler())
-                                .addLast(new GroupMessageHandler())
+                                .addLast(LOGIN_HANDLER, MESSAGE_HANDLER, CREATE_GROUP_HANDLER)
+                                .addLast(JOIN_GROUP_HANDLER, QUIT_GROUP_HANDLER, LIST_GROUP_MEMBERS_HANDLER)
+                                .addLast(GROUP_MESSAGE_HANDLER)
                                 .addLast(new PacketEncoder());
                     }
                 });

@@ -1,5 +1,6 @@
 package netty.book.practice.handler.client;
 
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import netty.book.practice.protocol.response.JoinGroupResponsePacket;
@@ -10,7 +11,14 @@ import netty.book.practice.protocol.response.JoinGroupResponsePacket;
  * @author FangYuan
  * @since 2023-04-03 20:46:01
  */
+@ChannelHandler.Sharable
 public class JoinGroupHandler extends SimpleChannelInboundHandler<JoinGroupResponsePacket> {
+
+    /**
+     * 单例
+     */
+    public static final JoinGroupHandler JOIN_GROUP_HANDLER = new JoinGroupHandler();
+
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, JoinGroupResponsePacket msg) throws Exception {
         if (msg.isSuccess()) {

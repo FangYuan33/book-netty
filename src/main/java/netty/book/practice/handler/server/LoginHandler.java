@@ -1,5 +1,6 @@
 package netty.book.practice.handler.server;
 
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import netty.book.practice.protocol.request.LoginRequestPacket;
@@ -15,7 +16,14 @@ import java.util.UUID;
  * @author FangYuan
  * @since 2023-03-30 20:33:06
  */
+@ChannelHandler.Sharable
 public class LoginHandler extends SimpleChannelInboundHandler<LoginRequestPacket> {
+
+    /**
+     * 单例
+     */
+    public static final LoginHandler LOGIN_HANDLER = new LoginHandler();
+
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, LoginRequestPacket msg) {
         // 初始化用户ID

@@ -1,6 +1,7 @@
 package netty.book.practice.handler.server;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import netty.book.practice.protocol.request.MessageRequestPacket;
@@ -15,7 +16,14 @@ import java.util.Date;
  * @author FangYuan
  * @since 2023-03-30 20:34:37
  */
+@ChannelHandler.Sharable
 public class MessageHandler extends SimpleChannelInboundHandler<MessageRequestPacket> {
+
+    /**
+     * 单例
+     */
+    public static final MessageHandler MESSAGE_HANDLER = new MessageHandler();
+
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, MessageRequestPacket msg) {
         // 初始化需要转发的消息信息

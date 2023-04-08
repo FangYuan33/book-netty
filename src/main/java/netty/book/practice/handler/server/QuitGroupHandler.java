@@ -1,5 +1,6 @@
 package netty.book.practice.handler.server;
 
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
@@ -13,7 +14,13 @@ import netty.book.practice.util.SessionUtil;
  * @author FangYuan
  * @since 2023-04-06 19:51:41
  */
+@ChannelHandler.Sharable
 public class QuitGroupHandler extends SimpleChannelInboundHandler<QuitGroupRequestPacket> {
+
+    /**
+     * 单例
+     */
+    public static final QuitGroupHandler QUIT_GROUP_HANDLER = new QuitGroupHandler();
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, QuitGroupRequestPacket msg) throws Exception {

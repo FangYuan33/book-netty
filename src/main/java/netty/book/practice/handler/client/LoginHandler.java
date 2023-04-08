@@ -1,5 +1,6 @@
 package netty.book.practice.handler.client;
 
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import netty.book.practice.protocol.response.LoginResponsePacket;
@@ -14,7 +15,13 @@ import java.util.Date;
  * @author FangYuan
  * @since 2023-03-30 20:19:55
  */
+@ChannelHandler.Sharable
 public class LoginHandler extends SimpleChannelInboundHandler<LoginResponsePacket> {
+
+    /**
+     * 单例
+     */
+    public static final LoginHandler LOGIN_HANDLER = new LoginHandler();
 
     /**
      * 处理登录response对象

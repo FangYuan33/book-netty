@@ -1,5 +1,6 @@
 package netty.book.practice.handler.server;
 
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import netty.book.practice.util.SessionUtil;
@@ -10,7 +11,14 @@ import netty.book.practice.util.SessionUtil;
  * @author FangYuan
  * @since 2023-04-01 20:29:53
  */
+@ChannelHandler.Sharable
 public class AuthHandler extends ChannelInboundHandlerAdapter {
+
+    /**
+     * 单例
+     */
+    public static final AuthHandler AUTH_HANDLER = new AuthHandler();
+
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (SessionUtil.hasLogin(ctx.channel())) {

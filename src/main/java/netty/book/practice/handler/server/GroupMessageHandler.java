@@ -1,5 +1,6 @@
 package netty.book.practice.handler.server;
 
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
@@ -13,7 +14,14 @@ import netty.book.practice.util.SessionUtil;
  * @author FangYuan
  * @since 2023-04-07 20:22:40
  */
+@ChannelHandler.Sharable
 public class GroupMessageHandler extends SimpleChannelInboundHandler<GroupMessageRequestPacket> {
+
+    /**
+     * 单例
+     */
+    public static final GroupMessageHandler GROUP_MESSAGE_HANDLER = new GroupMessageHandler();
+
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, GroupMessageRequestPacket msg) throws Exception {
         // 初始化响应对象

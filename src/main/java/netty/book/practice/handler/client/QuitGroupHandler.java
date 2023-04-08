@@ -1,5 +1,6 @@
 package netty.book.practice.handler.client;
 
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import netty.book.practice.protocol.response.QuitGroupResponsePacket;
@@ -10,7 +11,14 @@ import netty.book.practice.protocol.response.QuitGroupResponsePacket;
  * @author FangYuan
  * @since 2023-04-06 20:05:43
  */
+@ChannelHandler.Sharable
 public class QuitGroupHandler extends SimpleChannelInboundHandler<QuitGroupResponsePacket> {
+
+    /**
+     * 单例
+     */
+    public static final QuitGroupHandler QUIT_GROUP_HANDLER = new QuitGroupHandler();
+
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, QuitGroupResponsePacket msg) throws Exception {
         if (msg.isSuccess()) {

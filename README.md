@@ -212,3 +212,11 @@ public class LifeCycleHandler extends ChannelInboundHandlerAdapter {
     }
 }
 ```
+
+### 优化
+
+Netty 在每次有新连接到来的时候，都会调用 `ChannelInitializer` 的 `initChannel()` 方法，会将其中相关的 `Handler` 都创建一次，
+如果其中的 `Handler` 是无状态能够通用的，可以将其改成单例，这样就能够在每次连接建立时，避免多次创建相同的对象。
+
+`io.netty.channel.ChannelPipelineException: netty.book.practice.handler.server.LoginHandler is not a @Sharable handler, 
+so can't be added or removed multiple times`

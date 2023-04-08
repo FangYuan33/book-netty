@@ -7,11 +7,19 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import netty.book.practice.handler.SplitHandler;
-import netty.book.practice.handler.server.*;
 import netty.book.practice.serialize.codec.PacketDecoder;
 import netty.book.practice.serialize.codec.PacketEncoder;
 
 import java.util.Date;
+
+import static netty.book.practice.handler.server.AuthHandler.AUTH_HANDLER;
+import static netty.book.practice.handler.server.CreateGroupHandler.CREATE_GROUP_HANDLER;
+import static netty.book.practice.handler.server.GroupMessageHandler.GROUP_MESSAGE_HANDLER;
+import static netty.book.practice.handler.server.JoinGroupHandler.JOIN_GROUP_HANDLER;
+import static netty.book.practice.handler.server.ListGroupMembersHandler.LIST_GROUP_MEMBERS_HANDLER;
+import static netty.book.practice.handler.server.LoginHandler.LOGIN_HANDLER;
+import static netty.book.practice.handler.server.MessageHandler.MESSAGE_HANDLER;
+import static netty.book.practice.handler.server.QuitGroupHandler.QUIT_GROUP_HANDLER;
 
 /**
  * Netty 服务端
@@ -35,9 +43,9 @@ public class NettyServer {
                                 // 解决粘包和半包问题
                                 .addLast(new SplitHandler())
                                 .addLast(new PacketDecoder())
-                                .addLast(new LoginHandler(), new AuthHandler(), new MessageHandler())
-                                .addLast(new CreateGroupHandler(), new JoinGroupHandler(), new QuitGroupHandler())
-                                .addLast(new ListGroupMembersHandler(), new GroupMessageHandler())
+                                .addLast(LOGIN_HANDLER, AUTH_HANDLER, MESSAGE_HANDLER)
+                                .addLast(CREATE_GROUP_HANDLER, JOIN_GROUP_HANDLER, QUIT_GROUP_HANDLER)
+                                .addLast(LIST_GROUP_MEMBERS_HANDLER, GROUP_MESSAGE_HANDLER)
                                 .addLast(new PacketEncoder());
                     }
                 });

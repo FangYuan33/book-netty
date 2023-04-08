@@ -1,6 +1,7 @@
 package netty.book.practice.handler.server;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.DefaultChannelGroup;
@@ -17,7 +18,14 @@ import java.util.UUID;
  * @author FangYuan
  * @since 2023-04-03 20:03:32
  */
+@ChannelHandler.Sharable
 public class CreateGroupHandler extends SimpleChannelInboundHandler<CreateGroupRequestPacket> {
+
+    /**
+     * 单例
+     */
+    public static final CreateGroupHandler CREATE_GROUP_HANDLER = new CreateGroupHandler();
+
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, CreateGroupRequestPacket msg) {
         List<String> userNameList = msg.getUserNameList();

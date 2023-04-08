@@ -1,6 +1,7 @@
 package netty.book.practice.handler.server;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
@@ -14,7 +15,14 @@ import netty.book.practice.util.SessionUtil;
  * @author FangYuan
  * @since 2023-04-06 20:28:48
  */
+@ChannelHandler.Sharable
 public class ListGroupMembersHandler extends SimpleChannelInboundHandler<ListGroupMembersRequestPacket> {
+
+    /**
+     * 单例
+     */
+    public static final ListGroupMembersHandler LIST_GROUP_MEMBERS_HANDLER = new ListGroupMembersHandler();
+
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ListGroupMembersRequestPacket msg) throws Exception {
         // 群组ID
