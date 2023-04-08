@@ -572,10 +572,12 @@ b.group(bossGroup, workerGroup)
         });
 ```
 
-#### 减少NIO线程阻塞
+#### 6.4 减少NIO线程阻塞
 
 对于耗时的业务操作，需要将它们都丢到**业务线程池中去处理**，因为单个NIO线程会管理很多 `Channel` ，
 只要有一个 `Channel` 中的 `Handler` 的 `channelRead()` 方法被业务逻辑阻塞，那么它就会拖慢绑定在该NIO线程上的其他所有 `Channel`。
+
+为了避免上述情况，可以在包含长时间业务处理逻辑的Handler中创建一个线程池，并将其丢入线程池中进行执行，伪代码如下
 
 ```java
 protected void channelRead(ChannelHandlerContext ctx, Object message) {
