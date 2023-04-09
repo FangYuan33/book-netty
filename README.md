@@ -34,6 +34,9 @@ serverBootstrap.group(boss, worker).channel(NioServerSocketChannel.class)
                         });
             }
         });
+
+// 绑定端口号
+serverBootstrap.bind(2002);
 ```
 
 其中 `nioSocketChannel.pipeline()` 用来获取 `PipeLine` 对象，调用方法 `addLast()` 添加必要的业务处理逻辑，这里采用的是**责任链模式**，
@@ -66,6 +69,9 @@ bootstrap.group(group).channel(NioSocketChannel.class)
                     });
             }
         });
+
+// 连接服务端IP和端口
+bootstrap.connect("127.0.0.1", 2002);
 ```
 
 （注意：下文中内容均以服务端代码示例为准）
