@@ -39,6 +39,8 @@ serverBootstrap.group(boss, worker).channel(NioServerSocketChannel.class)
 serverBootstrap.bind(2002);
 ```
 
+通过调用 `.channel(NioServerSocketChannel.class)` 方法指定 `Channel` 类型为NIO类型，如果要指定为BIO类型，参数改成 `OioServerSocketChannel.class` 即可。
+
 其中 `nioSocketChannel.pipeline()` 用来获取 `PipeLine` 对象，调用方法 `addLast()` 添加必要的业务处理逻辑，这里采用的是**责任链模式**，
 会将每个Handler作为一个节点进行处理。
 
