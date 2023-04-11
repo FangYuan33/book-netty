@@ -653,6 +653,29 @@ b.group(bossGroup, workerGroup)
         });
 ```
 
+### 7. Reactor线程模型
+
+创建 `new NioEventLoopGroup()` 它的默认线程数是当前CPU线程数的**2倍**，最终会调用到如下源码
+
+```java
+// 这里计算的线程数量
+private static final int DEFAULT_EVENT_LOOP_THREADS = Math.max(1, SystemPropertyUtil.getInt(
+        "io.netty.eventLoopThreads", Runtime.getRuntime().availableProcessors() * 2));
+
+protected MultithreadEventLoopGroup(int nThreads, Executor executor, Object... args) {
+    super(nThreads == 0 ? DEFAULT_EVENT_LOOP_THREADS : nThreads, executor, args);
+}
+```
+
+跟进到构造方法的最终实现，会执行如下业务逻辑
+
+![](NioEventLoopGroup构造方法.jpg)
+
+其中在第2步创建 `NioEventLoop` 时，值得关注的是创建了一个 `Selector`，以此来实现IO多路复用；另外它还创建了高性能 `MPSC`（多生产者单消费者）队列，
+借助它来协调任务的异步执行，如此单条线程（NioEventLoop）、Selector和MPSC它们三者是**一对一**的关系。
+
+### 7.2 如何理解IO多路复用
+
 ### 其他
 
 ![](images/inoutbound.jpg)
