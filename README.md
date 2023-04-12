@@ -674,6 +674,10 @@ protected MultithreadEventLoopGroup(int nThreads, Executor executor, Object... a
 其中在第2步创建 `NioEventLoop` 时，值得关注的是创建了一个 `Selector`，以此来实现IO多路复用；另外它还创建了高性能 `MPSC`（多生产者单消费者）队列，
 借助它来协调任务的异步执行，如此单条线程（NioEventLoop）、Selector和MPSC它们三者是**一对一**的关系。
 
+第3步骤创建**线程选择器**，它的作用是为连接在 `NioEventLoopGroup` 中选择一个 `NioEventLoop`，并将该连接与 `NioEventLoop` 中的 `Selector` 完成绑定。
+在底层有两种选择器的实现，分别是 `PowerOfTowEventExecutorChooser` 和 `GenericEventExecutorChooser`，它们的原理都是从线程池里循环选择线程，
+不同的是前者计算循环的索引采用的是**位运算**而后者采用的是**取余运算**。
+
 ### 7.2 如何理解IO多路复用
 
 ### 其他
