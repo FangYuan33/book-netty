@@ -669,7 +669,7 @@ protected MultithreadEventLoopGroup(int nThreads, Executor executor, Object... a
 
 跟进到构造方法的最终实现，会执行如下业务逻辑
 
-![](NioEventLoopGroup构造方法.jpg)
+![](images/NioEventLoopGroup构造方法.jpg)
 
 其中在第2步创建 `NioEventLoop` 时，值得关注的是创建了一个 `Selector`，以此来实现IO多路复用；另外它还创建了高性能 `MPSC`（多生产者单消费者）队列，
 借助它来协调任务的异步执行，如此单条线程（NioEventLoop）、Selector和MPSC它们三者是**一对一**的关系。
