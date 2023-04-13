@@ -678,6 +678,19 @@ protected MultithreadEventLoopGroup(int nThreads, Executor executor, Object... a
 在底层有两种选择器的实现，分别是 `PowerOfTowEventExecutorChooser` 和 `GenericEventExecutorChooser`，它们的原理都是从线程池里循环选择线程，
 不同的是前者计算循环的索引采用的是**位运算**而后者采用的是**取余运算**。
 
+### 7.2 Reactor线程 select 操作
+
+源码位置 `NioEventLoop` 的 `run()` 方法， `select` 操作会**不断轮询是否有IO事件发生**，并且在轮询过程中不断检查是否有任务需要执行，
+保证Netty任务队列中的任务能够及时执行，轮询过程使用一个计数器避开了 JDK 的空轮询Bug
+
+### 7.3 处理产生IO事件的Channel
+
+在 Netty 的 `Channel` 中，有两大类型的 `Channel`，一个是 `NioServerSocketChannel`，由 boss NioEventLoop 处理；
+另一个是 `NioSocketChannel`，由worker NioEventLoop 处理，所以
+
+1. 对于 boss NioEventLoop 来说，轮询到的是连接事件，后续通过 NioServerSocketChannel 的 Pipeline 将连接交给一个 work NioEventLoop 处理
+2. 对于 work NioEventLoop 来说，轮询到的是读写事件，后续通过 NioSocketChannel 的 Pipeline 将读取到的数据传递给每个 ChannelHandler 处理
+
 ### 7.2 如何理解IO多路复用
 
 ### 其他
