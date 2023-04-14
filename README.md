@@ -672,7 +672,8 @@ protected MultithreadEventLoopGroup(int nThreads, Executor executor, Object... a
 ![](images/NioEventLoopGroup构造方法.jpg)
 
 其中在第2步创建 `NioEventLoop` 时，值得关注的是创建了一个 `Selector`，以此来实现IO多路复用；另外它还创建了高性能 `MPSC`（多生产者单消费者）队列，
-借助它来协调任务的异步执行，如此单条线程（NioEventLoop）、Selector和MPSC它们三者是**一对一**的关系。
+借助它来协调任务的异步执行，如此单条线程（NioEventLoop）、Selector和MPSC它们三者是**一对一**的关系。而每条连接都对应一个 `Channel`，
+每个 `Channel` 都绑定唯一一个 `NioEventLoop`，因此单个连接的所有操作都是在一个线程中执行，是线程安全的。
 
 第3步骤创建**线程选择器**，它的作用是为连接在 `NioEventLoopGroup` 中选择一个 `NioEventLoop`，并将该连接与 `NioEventLoop` 中的 `Selector` 完成绑定。
 在底层有两种选择器的实现，分别是 `PowerOfTowEventExecutorChooser` 和 `GenericEventExecutorChooser`，它们的原理都是从线程池里循环选择线程，
@@ -690,6 +691,14 @@ protected MultithreadEventLoopGroup(int nThreads, Executor executor, Object... a
 
 1. 对于 boss NioEventLoop 来说，轮询到的是连接事件，后续通过 NioServerSocketChannel 的 Pipeline 将连接交给一个 work NioEventLoop 处理
 2. 对于 work NioEventLoop 来说，轮询到的是读写事件，后续通过 NioSocketChannel 的 Pipeline 将读取到的数据传递给每个 ChannelHandler 处理
+
+注意任务的执行都是**异步**的。
+
+### 7.4 任务的收集和执行
+
+上文中提到了我们创建了高性能的`MPSC`队列，它是用来**聚集**非Reactor线程创建的任务的，`NioEventLoop` 会在执行的过程中不断检测是否有事件发生，
+如果有事件发生就处理，处理完事件之后再处理非Reactor线程创建的任务。**在检测是否有事件发生的时候**，为了保证异步任务的及时处理，只要有任务要处理，
+就会停止任务检测，去处理任务，处理任务时是Reactor单线程执行。
 
 ### 7.2 如何理解IO多路复用
 
