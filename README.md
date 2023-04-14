@@ -705,6 +705,13 @@ protected MultithreadEventLoopGroup(int nThreads, Executor executor, Object... a
 简单地说：IO多路复用是指**可以在一个线程内处理多个连接的IO事件请求**。以Java中的IO多路复用为例，服务端创建 `Selector` 对象不断的调用 `select()` 方法来处理各个连接上的IO事件，
 之后将这些IO事件交给任务线程异步去执行，这就达到了在一个线程内同时处理多个连接的IO请求事件的目的。
 
+### 7.6 注册连接的流程
+
+当 boss Reactor线程检测到 ACCEPT 事件之后，创建一个 `NioSocketChannel`，并把用户设置的 ChannelOption(Option参数配置)、ChannelAttr(Channel 参数)、
+ChannelHandler(ChannelInitializer)封装到 `NioSocketChannel` 中。接着，使用线程选择器在 `NioEventLoopGroup` 中选择一条 `NioEventLoop` (线程)，
+把 `NioSocketChannel` 中包装的JDK Channel 当做Key，自身（NioSocketChannel）作为 attachment，注册 NioEventLoop 对应的 Selector上。
+这样，后续有读写事件发生，就可以直接获取 attachment 来处理读写数据的逻辑。
+
 ### 其他
 
 ![](images/inoutbound.jpg)
