@@ -740,6 +740,13 @@ ChannelHandler(ChannelInitializer)封装到 `NioSocketChannel` 中。接着，�
 `OutboundHandler` 是**从链表尾巴向链表头**调用，相当于反向遍历 `ChannelPipeline` 双向链表，直到头节点 `HeadContext`，
 调用 `Unsafe.write()` 方法结束。
 
+#### 8.2 异常传播
+
+异常的传播机制和 `Inbound事件` 的传播机制类似，在**任何节点发生的异常都会向下一个节点传递**。
+如果自定义的 Handler 没有处理异常也没有实现 `exceptionCaught()` 方法，最终则会落到 `TailContext` 节点，控制台打印异常未处理的警告信息。
+
+通常异常处理，我们会定义一个异常处理器，继承自 `ChannelDuplexHandler` ，放在自定义**链表节点的末尾**，这样就能够一定捕获和处理异常。
+
 ### 巨人的肩膀
 
 - 《Netty即时聊天实战与底层原理》
