@@ -653,9 +653,41 @@ b.group(bossGroup, workerGroup)
         });
 ```
 
-### 7. Reactor线程模型
+### 7. ChannelPipeline
 
-#### 7.1 NioEventLoopGroup
+`ChannelPipeline` 与 `Channel` 密切相关，它可以看做是一条流水线，数据以字节流的形式进来，经过不同 `Handler` 的"加工处理"，
+最终以字节流的形式输出。`ChannelPipeline` 在每条新连接建立的时候被创建，是一条双向链表，其中每一个节点都是 `ChannelHadnlerContext` 对象，
+能够通过它拿到相关的上下文信息，默认它有头节点 `HeadContext` 和尾结点 `TailContext`。
+
+#### 7.1 InboundHandler 和 OutboundHandler
+
+定义在 `ChannelPipeline` 中的 Handler 是**可插拔**的，能够完成动态编织，调用 `ctx.pipeline().remove()` 方法可移除，
+调用 `ctx.pipeline().addXxx()` 方法可进行添加。
+
+`InboundHandler` 与 `OutboundHandler` 处理的事件不同，前者处理 `Inbound事件` 典型的就是读取数据流并加工处理；
+后者会对调用 writeAndFlush() 方法的 `Outbound事件` 进行处理。`Inbound事件` 会先经过头节点 `HeadContext`，它既属于 `Inbound` 类型，
+也属于 `Outbound` 类型，所以它能处理读写事件。在处理读事件时，只是简单的将该事件传播下去(`ctx.fireChannelRead(mug)`)；处理写事件时，则交给 `Unsafe` 执行。
+
+此外，两者的传播机制也是不同的：
+
+`InboundHandler` 会从链表头逐个向下调用，执行过程中调用 `findContextInbound()` 方法来寻找 `InboundHandler` 节点，
+直到 `TailContext` 节点执行方法完毕，结束调用。一般自定义的 `ChannelInboundHandler` 都继承自 `ChannelInboundHandlerAdapter`，
+如果没有覆盖 `channelXxx()` 相关方法，那么该事件正常会遍历双向链表一直传播到尾结点，否则就会在当前节点执行完结束；
+当然也可以调用 `fireXxx()` 方法让事件从当前节点继续向下传播。
+
+`OutboundHandler` 是**从链表尾巴向链表头**调用，相当于反向遍历 `ChannelPipeline` 双向链表，直到头节点 `HeadContext`，
+调用 `Unsafe.write()` 方法结束。
+
+#### 7.2 异常传播
+
+异常的传播机制和 `Inbound事件` 的传播机制类似，在**任何节点发生的异常都会向下一个节点传递**。
+如果自定义的 Handler 没有处理异常也没有实现 `exceptionCaught()` 方法，最终则会落到 `TailContext` 节点，控制台打印异常未处理的警告信息。
+
+通常异常处理，我们会定义一个异常处理器，继承自 `ChannelDuplexHandler` ，放在自定义**链表节点的末尾**，这样就能够一定捕获和处理异常。
+
+### 8. Reactor线程模型
+
+#### 8.1 NioEventLoopGroup
 
 创建 `new NioEventLoopGroup()` 它的默认线程数是当前CPU线程数的**2倍**，最终会调用到如下源码
 
@@ -681,12 +713,12 @@ protected MultithreadEventLoopGroup(int nThreads, Executor executor, Object... a
 在底层有两种选择器的实现，分别是 `PowerOfTowEventExecutorChooser` 和 `GenericEventExecutorChooser`，它们的原理都是从线程池里循环选择线程，
 不同的是前者计算循环的索引采用的是**位运算**而后者采用的是**取余运算**。
 
-#### 7.2 Reactor线程 select 操作
+#### 8.2 Reactor线程 select 操作
 
 源码位置 `NioEventLoop` 的 `run()` 方法， `select` 操作会**不断轮询是否有IO事件发生**，并且在轮询过程中不断检查是否有任务需要执行，
 保证Netty任务队列中的任务能够及时执行，轮询过程使用一个计数器避开了 JDK 的空轮询Bug
 
-#### 7.3 处理产生IO事件的Channel
+#### 8.3 处理产生IO事件的Channel
 
 在 Netty 的 `Channel` 中，有两大类型的 `Channel`，一个是 `NioServerSocketChannel`，由 boss NioEventLoop 处理；
 另一个是 `NioSocketChannel`，由worker NioEventLoop 处理，所以
@@ -696,56 +728,24 @@ protected MultithreadEventLoopGroup(int nThreads, Executor executor, Object... a
 
 注意任务的执行都是**异步**的。
 
-#### 7.4 任务的收集和执行
+#### 8.4 任务的收集和执行
 
 上文中提到了我们创建了高性能的`MPSC`队列，它是用来**聚集**非Reactor线程创建的任务的，`NioEventLoop` 会在执行的过程中不断检测是否有事件发生，
 如果有事件发生就处理，处理完事件之后再处理非Reactor线程创建的任务。**在检测是否有事件发生的时候**，为了保证异步任务的及时处理，只要有任务要处理，
 就会停止任务检测，去处理任务，处理任务时是Reactor单线程执行。
 
-#### 7.5 注册连接的流程
+#### 8.5 注册连接的流程
 
 当 boss Reactor线程检测到 ACCEPT 事件之后，创建一个 `NioSocketChannel`，并把用户设置的 ChannelOption(Option参数配置)、ChannelAttr(Channel 参数)、
 ChannelHandler(ChannelInitializer)封装到 `NioSocketChannel` 中。接着，使用线程选择器在 `NioEventLoopGroup` 中选择一条 `NioEventLoop` (线程)，
 把 `NioSocketChannel` 中包装的JDK Channel 当做Key，自身（NioSocketChannel）作为 attachment，注册 NioEventLoop 对应的 Selector上。
 这样，后续有读写事件发生，就可以直接获取 attachment 来处理读写数据的逻辑。
 
-#### 7.6 如何理解IO多路复用
+#### 8.6 如何理解IO多路复用
 
 简单地说：IO多路复用是指**可以在一个线程内处理多个连接的IO事件请求**。以Java中的IO多路复用为例，
 服务端创建 `Selector` 对象不断的调用 `select()` 方法来处理各个连接上的IO事件，
 之后将这些IO事件交给任务线程异步去执行，这就达到了在一个线程内同时处理多个连接的IO请求事件的目的。
-
-### 8. ChannelPipeline
-
-`ChannelPipeline` 与 `Channel` 密切相关，它可以看做是一条流水线，数据以字节流的形式进来，经过不同 `Handler` 的"加工处理"，
-最终以字节流的形式输出。`ChannelPipeline` 在每条新连接建立的时候被创建，是一条双向链表，其中每一个节点都是 `ChannelHadnlerContext` 对象，
-能够通过它拿到相关的上下文信息，默认它有头节点 `HeadContext` 和尾结点 `TailContext`。
-
-#### 8.1 InboundHandler 和 OutboundHandler
-
-定义在 `ChannelPipeline` 中的 Handler 是**可插拔**的，能够完成动态编织，调用 `ctx.pipeline().remove()` 方法可移除，
-调用 `ctx.pipeline().addXxx()` 方法可进行添加。
-
-`InboundHandler` 与 `OutboundHandler` 处理的事件不同，前者处理 `Inbound事件` 典型的就是读取数据流并加工处理；
-后者会对调用 writeAndFlush() 方法的 `Outbound事件` 进行处理。`Inbound事件` 会先经过头节点 `HeadContext`，它既属于 `Inbound` 类型，
-也属于 `Outbound` 类型，所以它能处理读写事件。在处理读事件时，只是简单的将该事件传播下去(`ctx.fireChannelRead(mug)`)；处理写事件时，则交给 `Unsafe` 执行。
-
-此外，两者的传播机制也是不同的：
-
-`InboundHandler` 会从链表头逐个向下调用，执行过程中调用 `findContextInbound()` 方法来寻找 `InboundHandler` 节点，
-直到 `TailContext` 节点执行方法完毕，结束调用。一般自定义的 `ChannelInboundHandler` 都继承自 `ChannelInboundHandlerAdapter`，
-如果没有覆盖 `channelXxx()` 相关方法，那么该事件正常会遍历双向链表一直传播到尾结点，否则就会在当前节点执行完结束；
-当然也可以调用 `fireXxx()` 方法让事件从当前节点继续向下传播。
-
-`OutboundHandler` 是**从链表尾巴向链表头**调用，相当于反向遍历 `ChannelPipeline` 双向链表，直到头节点 `HeadContext`，
-调用 `Unsafe.write()` 方法结束。
-
-#### 8.2 异常传播
-
-异常的传播机制和 `Inbound事件` 的传播机制类似，在**任何节点发生的异常都会向下一个节点传递**。
-如果自定义的 Handler 没有处理异常也没有实现 `exceptionCaught()` 方法，最终则会落到 `TailContext` 节点，控制台打印异常未处理的警告信息。
-
-通常异常处理，我们会定义一个异常处理器，继承自 `ChannelDuplexHandler` ，放在自定义**链表节点的末尾**，这样就能够一定捕获和处理异常。
 
 ### 巨人的肩膀
 
