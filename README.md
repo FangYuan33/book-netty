@@ -737,6 +737,9 @@ ChannelHandler(ChannelInitializer)封装到 `NioSocketChannel` 中。接着，�
 如果没有覆盖 `channelXxx()` 相关方法，那么该事件正常会遍历双向链表一直传播到尾结点，否则就会在当前节点执行完结束；
 当然也可以调用 `fireXxx()` 方法让事件从当前节点继续向下传播。
 
+`OutboundHandler` 是**从链表尾巴向链表头**调用，相当于反向遍历 `ChannelPipeline` 双向链表，直到头节点 `HeadContext`，
+调用 `Unsafe.write()` 方法结束。
+
 ### 巨人的肩膀
 
 - 《Netty即时聊天实战与底层原理》
