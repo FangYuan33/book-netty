@@ -655,6 +655,8 @@ b.group(bossGroup, workerGroup)
 
 ### 7. Reactor线程模型
 
+#### 7.1 NioEventLoopGroup
+
 创建 `new NioEventLoopGroup()` 它的默认线程数是当前CPU线程数的**2倍**，最终会调用到如下源码
 
 ```java
@@ -679,12 +681,12 @@ protected MultithreadEventLoopGroup(int nThreads, Executor executor, Object... a
 在底层有两种选择器的实现，分别是 `PowerOfTowEventExecutorChooser` 和 `GenericEventExecutorChooser`，它们的原理都是从线程池里循环选择线程，
 不同的是前者计算循环的索引采用的是**位运算**而后者采用的是**取余运算**。
 
-### 7.2 Reactor线程 select 操作
+#### 7.2 Reactor线程 select 操作
 
 源码位置 `NioEventLoop` 的 `run()` 方法， `select` 操作会**不断轮询是否有IO事件发生**，并且在轮询过程中不断检查是否有任务需要执行，
 保证Netty任务队列中的任务能够及时执行，轮询过程使用一个计数器避开了 JDK 的空轮询Bug
 
-### 7.3 处理产生IO事件的Channel
+#### 7.3 处理产生IO事件的Channel
 
 在 Netty 的 `Channel` 中，有两大类型的 `Channel`，一个是 `NioServerSocketChannel`，由 boss NioEventLoop 处理；
 另一个是 `NioSocketChannel`，由worker NioEventLoop 处理，所以
@@ -694,23 +696,24 @@ protected MultithreadEventLoopGroup(int nThreads, Executor executor, Object... a
 
 注意任务的执行都是**异步**的。
 
-### 7.4 任务的收集和执行
+#### 7.4 任务的收集和执行
 
 上文中提到了我们创建了高性能的`MPSC`队列，它是用来**聚集**非Reactor线程创建的任务的，`NioEventLoop` 会在执行的过程中不断检测是否有事件发生，
 如果有事件发生就处理，处理完事件之后再处理非Reactor线程创建的任务。**在检测是否有事件发生的时候**，为了保证异步任务的及时处理，只要有任务要处理，
 就会停止任务检测，去处理任务，处理任务时是Reactor单线程执行。
 
-### 7.5 如何理解IO多路复用
-
-简单地说：IO多路复用是指**可以在一个线程内处理多个连接的IO事件请求**。以Java中的IO多路复用为例，服务端创建 `Selector` 对象不断的调用 `select()` 方法来处理各个连接上的IO事件，
-之后将这些IO事件交给任务线程异步去执行，这就达到了在一个线程内同时处理多个连接的IO请求事件的目的。
-
-### 7.6 注册连接的流程
+#### 7.5 注册连接的流程
 
 当 boss Reactor线程检测到 ACCEPT 事件之后，创建一个 `NioSocketChannel`，并把用户设置的 ChannelOption(Option参数配置)、ChannelAttr(Channel 参数)、
 ChannelHandler(ChannelInitializer)封装到 `NioSocketChannel` 中。接着，使用线程选择器在 `NioEventLoopGroup` 中选择一条 `NioEventLoop` (线程)，
 把 `NioSocketChannel` 中包装的JDK Channel 当做Key，自身（NioSocketChannel）作为 attachment，注册 NioEventLoop 对应的 Selector上。
 这样，后续有读写事件发生，就可以直接获取 attachment 来处理读写数据的逻辑。
+
+#### 7.6 如何理解IO多路复用
+
+简单地说：IO多路复用是指**可以在一个线程内处理多个连接的IO事件请求**。以Java中的IO多路复用为例，
+服务端创建 `Selector` 对象不断的调用 `select()` 方法来处理各个连接上的IO事件，
+之后将这些IO事件交给任务线程异步去执行，这就达到了在一个线程内同时处理多个连接的IO请求事件的目的。
 
 ### 其他
 
