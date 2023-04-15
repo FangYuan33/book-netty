@@ -664,19 +664,18 @@ b.group(bossGroup, workerGroup)
 定义在 `ChannelPipeline` 中的 Handler 是**可插拔**的，能够完成动态编织，调用 `ctx.pipeline().remove()` 方法可移除，
 调用 `ctx.pipeline().addXxx()` 方法可进行添加。
 
-`InboundHandler` 与 `OutboundHandler` 处理的事件不同，前者处理 `Inbound事件` 典型的就是读取数据流并加工处理；
-后者会对调用 writeAndFlush() 方法的 `Outbound事件` 进行处理。`Inbound事件` 会先经过头节点 `HeadContext`，它既属于 `Inbound` 类型，
-也属于 `Outbound` 类型，所以它能处理读写事件。在处理读事件时，只是简单的将该事件传播下去(`ctx.fireChannelRead(mug)`)；处理写事件时，则交给 `Unsafe` 执行。
+`InboundHandler` 与 `OutboundHandler` 处理的事件不同，前者处理 `Inbound事件`，典型的就是读取数据流并加工处理；
+后者会对调用 `writeAndFlush()` 方法的 `Outbound事件` 进行处理。
 
 此外，两者的传播机制也是不同的：
 
-`InboundHandler` 会从链表头逐个向下调用，执行过程中调用 `findContextInbound()` 方法来寻找 `InboundHandler` 节点，
-直到 `TailContext` 节点执行方法完毕，结束调用。一般自定义的 `ChannelInboundHandler` 都继承自 `ChannelInboundHandlerAdapter`，
-如果没有覆盖 `channelXxx()` 相关方法，那么该事件正常会遍历双向链表一直传播到尾结点，否则就会在当前节点执行完结束；
-当然也可以调用 `fireXxx()` 方法让事件从当前节点继续向下传播。
+`InboundHandler` 会从链表头逐个向下调用，头节点只是简单的将该事件传播下去(`ctx.fireChannelRead(mug)`)，
+执行过程中调用 `findContextInbound()` 方法来寻找 `InboundHandler` 节点，直到 `TailContext` 节点执行方法完毕，结束调用。
+一般自定义的 `ChannelInboundHandler` 都继承自 `ChannelInboundHandlerAdapter`， 如果没有覆盖 `channelXxx()` 相关方法，
+那么该事件正常会遍历双向链表一直传播到尾结点，否则就会在当前节点执行完结束；当然也可以调用 `fireXxx()` 方法让事件从当前节点继续向下传播。
 
-`OutboundHandler` 是**从链表尾巴向链表头**调用，相当于反向遍历 `ChannelPipeline` 双向链表，直到头节点 `HeadContext`，
-调用 `Unsafe.write()` 方法结束。
+`OutboundHandler` 是**从链表尾向链表头**调用，相当于反向遍历 `ChannelPipeline` 双向链表，`Outbound事件` 会先经过 `TailContext` 尾节点，
+并在执行过程中不断寻找 `OutboundHandler` 节点加工处理，直到头节点 `HeadContext` 调用 `Unsafe.write()` 方法结束。
 
 #### 7.2 异常传播
 
