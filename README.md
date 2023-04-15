@@ -715,7 +715,11 @@ ChannelHandler(ChannelInitializer)封装到 `NioSocketChannel` 中。接着，�
 服务端创建 `Selector` 对象不断的调用 `select()` 方法来处理各个连接上的IO事件，
 之后将这些IO事件交给任务线程异步去执行，这就达到了在一个线程内同时处理多个连接的IO请求事件的目的。
 
-### 其他
+### 8. ChannelPipeline
+
+`ChannelPipeline` 与 `Channel` 密切相关，它可以看做是一条流水线，数据以字节流的形式进来，经过不同 `Handler` 的"加工处理"，
+最终以字节流的形式输出。`ChannelPipeline` 在每条新连接建立的时候被创建，是一条双向链表，其中每一个节点都是 `ChannelHadnlerContext` 对象，
+能够通过它拿到相关的上下文信息，默认它有头节点 `HeadContext` 和尾结点 `TailContext`。
 
 ![](images/inoutbound.jpg)
 
