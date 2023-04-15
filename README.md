@@ -721,9 +721,21 @@ ChannelHandler(ChannelInitializer)封装到 `NioSocketChannel` 中。接着，�
 最终以字节流的形式输出。`ChannelPipeline` 在每条新连接建立的时候被创建，是一条双向链表，其中每一个节点都是 `ChannelHadnlerContext` 对象，
 能够通过它拿到相关的上下文信息，默认它有头节点 `HeadContext` 和尾结点 `TailContext`。
 
-![](images/inoutbound.jpg)
+#### 8.1 InboundHandler 和 OutboundHandler
 
-InboundHandler的执行顺序与添加的责任链节点顺序一致，而OutboundHandler的执行顺序则相反。
+定义在 `ChannelPipeline` 中的 Handler 是**可插拔**的，能够完成动态编织，调用 `ctx.pipeline().remove()` 方法可移除，
+调用 `ctx.pipeline().addXxx()` 方法可进行添加。
+
+`InboundHandler` 与 `OutboundHandler` 处理的事件不同，前者处理 `Inbound事件` 典型的就是读取数据流并加工处理；
+后者会对调用 writeAndFlush() 方法的 `Outbound事件` 进行处理。`Inbound事件` 会先经过头节点 `HeadContext`，它既属于 `Inbound` 类型，
+也属于 `Outbound` 类型，所以它能处理读写事件。在处理读事件时，只是简单的将该事件传播下去(`ctx.fireChannelRead(mug)`)；处理写事件时，则交给 `Unsafe` 执行。
+
+此外，两者的传播机制也是不同的：
+
+`InboundHandler` 会从链表头逐个向下调用，执行过程中调用 `findContextInbound()` 方法来寻找 `InboundHandler` 节点，
+直到 `TailContext` 节点执行方法完毕，结束调用。一般自定义的 `ChannelInboundHandler` 都继承自 `ChannelInboundHandlerAdapter`，
+如果没有覆盖 `channelXxx()` 相关方法，那么该事件正常会遍历双向链表一直传播到尾结点，否则就会在当前节点执行完结束；
+当然也可以调用 `fireXxx()` 方法让事件从当前节点继续向下传播。
 
 ### 巨人的肩膀
 
